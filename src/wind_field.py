@@ -5,6 +5,10 @@ class DistroNotRecognized(Exception):
     message = '\nException: DistroNotRecognizedError:\nDistribution not recognized\
      \nTry either Normal or Uniform '
 
+class WhichSampleNotRecognized(Exception):
+     message = '\nException: WhichSampleNotRecognizedError:\nWhich not recognized\
+      \nTry either original or samples '
+
 class wind_field:
 
     def __init__(self, vel, loc, length, nsamps, distro):
@@ -60,13 +64,23 @@ class wind_field:
         #TODO: How to make this run in background?
         plt.show()
 
-    def get_wind(self, x, y):
+    def get_wind(self, x, y, n, which):
        #function to get wind values from interpolating measurment vector field
-
         import numpy as np
+
+        if which == 'samples':
+            x_matrix = self.x_samples[n,:,:]
+            y_matrix = self.y_samples[n,:,:]
+        elif which == 'original':
+            x_matrix = self.x_matrix[:,:]
+            y_matrix = self.y_matrix[:,:]
+        else:
+            raise WhichSampleNotRecognized
 
         #get nearest x and y indices:
         xarray = self.x_location[:,0]
+        yarray = self.y_location[0,:]
+
         x_idx = (np.abs(xarray - x)).argmin()
 
         if xarray[x_idx] >= x:
@@ -77,7 +91,7 @@ class wind_field:
             x_high = x_idx + 1
             x_low = x_idx
 
-        yarray = self.y_location[0,:]
+
         y_idx = (np.abs(yarray - y)).argmin()
 
         if yarray[y_idx]>= y:
@@ -94,9 +108,9 @@ class wind_field:
 
         a = np.matrix([float(xarray[x_high]) - x, x - float(xarray[x_low])])
 
-        b_x = np.matrix([[float(self.x_matrix[x_low,y_low]), float(self.x_matrix[x_low,y_high])],[float(self.x_matrix[x_high,y_low]), float(self.x_matrix[x_high,y_high])]])
+        b_x = np.matrix([[float(x_matrix[x_low,y_low]), float(x_matrix[x_low,y_high])],[float(self.x_matrix[x_high,y_low]), float(self.x_matrix[x_high,y_high])]])
 
-        b_y = np.matrix([[float(self.y_matrix[x_low,y_low]), float(self.y_matrix[x_low,y_high])], [float(self.y_matrix[x_high,y_low]), float(self.y_matrix[x_high,y_high])]])
+        b_y = np.matrix([[float(y_matrix[x_low,y_low]), float(y_matrix[x_low,y_high])], [float(self.y_matrix[x_high,y_low]), float(self.y_matrix[x_high,y_high])]])
 
         c = np.matrix([[float(yarray[y_high] - y)], [float(y - yarray[y_low])]])
 
@@ -106,23 +120,35 @@ class wind_field:
 
         return [x_value, y_value]
 
-    def prop_balloon(self, xstart, ystart, tend, dt):
+    def prop_balloon(self, xstart, ystart, tend, dt, which):
         #this method propagates a balloon through the vector field to determine the uti
         #of releasing the balloon at the starting point.
 
         import numpy as np
 
+        ''' TODO: Make this work for every sample,
+        - Add a "which" instance that chooses which distribution
+        to propagate '''
+
+        if which == 'samples':
+            N = self.nsamps
+        elif which == 'original':
+            N = 1
+        else:
+            raise WhichSampleNotRecognized
+
         t_vect = np.arange(0,tend+dt,dt)
-        x_vect = np.zeros((1,len(t_vect)))
-        y_vect = np.zeros((1,len(t_vect)))
+        x_vect = np.zeros((N,1,len(t_vect)))
+        y_vect = np.zeros((N,1,len(t_vect)))
 
-        x_vect[0,0] = xstart
-        y_vect[0,0] = ystart
+        x_vect[:,0,0] = xstart
+        y_vect[:,0,0] = ystart
 
-        for i in range(1,len(t_vect)):
-            [x_vel, y_vel] = self.get_wind(x_vect[0,i-1],y_vect[0,i-1])
-            x_vect[0,i] = x_vect[0,i-1] + x_vel*dt
-            y_vect[0,i] = y_vect[0,i-1] + y_vel*dt
+        for n in range(0,N):
+            for i in range(1,len(t_vect)):
+                [x_vel, y_vel] = self.get_wind(x_vect[n,0,i-1],y_vect[n,0,i-1],n, which)
+                x_vect[n,0,i] = x_vect[n,0,i-1] + x_vel*dt
+                y_vect[n,0,i] = y_vect[n,0,i-1] + y_vel*dt
 
         return [x_vect,y_vect]
 
@@ -147,11 +173,11 @@ class wind_field:
 
             if self.distro == 'Normal':
                 x = np.random.normal(0,1, size) + x_orig
-                y = np.random.normal(0,1, size) + y_orig
+                y = y_orig #+ np.random.normal(0,1, size)
 
             elif self.distro == 'Uniform':
                 x = np.random.uniform(-0.1,0.1, size) + x_orig
-                y = np.random.uniform(-0.1,0.1, size) + y_orig
+                y = y_orig #+ np.random.uniform(-0.1,0.1, size)
 
             x_out[i,:,:] = x
             y_out[i,:,:] = y

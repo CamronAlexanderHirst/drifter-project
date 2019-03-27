@@ -9,7 +9,7 @@ m = 10
 length = 2
 [vel,loc,length] = generate_wind_field(n ,m , length, 0.25, 0.1)
 
-A = wind_field.wind_field(vel, loc, length, 1000, 'Normal')
+A = wind_field.wind_field(vel, loc, length, 500, 'Normal')
 
 #test out plot:
 #import subprocess as subp
@@ -19,3 +19,4 @@ A = wind_field.wind_field(vel, loc, length, 1000, 'Normal')
 #matrix.plot_wind_field()
 
 A.sample_for_prop()
+[x,y] = A.prop_balloon(5.1,2.5, 5,0.1, 'samples' )
