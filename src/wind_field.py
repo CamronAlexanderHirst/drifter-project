@@ -1,47 +1,39 @@
 #Function to create an nxm vector field for wind vectors. Outputs an n x m x 2 matrix for x and y wind speeds at each grid point.
 #Alex Hirst
 
+class DistroNotRecognized(Exception):
+    message = '\nException: DistroNotRecognizedError:\nDistribution not recognized\
+     \nTry either Normal or Uniform '
+
 class wind_field:
 
-    def __init__(self, n, m, length, init_x, dist):
+    def __init__(self, vel, loc, length, nsamps, distro):
 
-        import numpy as np
-    
         #Initialize wind and measurement location matrices
-        Matrix = np.zeros((2,n,m))
-        location_Matrix = np.zeros((2,n,m))
-
-        Matrix[1,:,:] = 1 
-        #define all y-velocities as 1m/s
-
-        Matrix[0,:,0] = init_x 
-        #define all left hand side x-vels
-
-        for i in range(0,n):
-        #over y
-            for j in range(1,m): 
-            #over x
-                Matrix[0,i,j] = Matrix[0,i,j-1] + np.random.uniform(-1*dist,dist)
-            
-            for j in range(0,m):    
-                location_Matrix[0,i,j] = i*length
-                location_Matrix[1,i,j] = j*length
 
 
-        self.x_matrix = Matrix[0,:,:]
-        self.y_matrix = Matrix[1,:,:]
-        self.x_location = location_Matrix[0,:,:]
-        self.y_location = location_Matrix[1,:,:]
-
+        self.x_matrix = vel[0,:,:]
+        self.y_matrix = vel[1,:,:]
+        self.x_location = loc[0,:,:]
+        self.y_location = loc[1,:,:]
+        self.nsamps = nsamps
         self.length = length
+
+        if distro == 'Normal':
+            self.distro = 'Normal'
+        elif distro == 'Uniform':
+            self.distro = 'Uniform'
+        else:
+            raise DistroNotRecognized
+
 
 
     def plot_wind_field(self, x_traj, y_traj):
         #This method creates a new figure, and plots the wind vector field on a gridded
-        #space. matplotlib dependent. arguement is the grid size in meters. 
+        #space. matplotlib dependent. arguement is the grid size in meters.
         import matplotlib.pyplot as plt
         import numpy as np
-        
+
         #Retrieve measurement values and locations
         xmat = self.x_matrix
         ymat = self.y_matrix
@@ -54,16 +46,16 @@ class wind_field:
 
         plt.quiver(self.x_location, self.y_location, xmat,ymat)
         plt.hold(True)
-        #TODO: How to make the trajectory plot? 
+        #TODO: How to make the trajectory plot?
         plt.plot(x_traj, y_traj)
         plt.axis([self.x_location[0,0]-1, self.x_location[-1,1]+1, self.y_location[0,0]-1, self.y_location[-1,1]+1])
         plt.xticks(np.arange(0, length*(matsizex), length))
         plt.yticks(np.arange(0,length*(matsizey), length))
         plt.xlabel('x coordinates (m)')
         plt.ylabel('y coordiantes (m)')
-        
+
         plt.grid(True ,which = 'major', axis = 'both')
-        
+
         #Show plot
         #TODO: How to make this run in background?
         plt.show()
@@ -76,7 +68,7 @@ class wind_field:
         #get nearest x and y indices:
         xarray = self.x_location[:,0]
         x_idx = (np.abs(xarray - x)).argmin()
-        
+
         if xarray[x_idx] >= x:
             x_high = x_idx
             x_low = x_idx - 1
@@ -87,7 +79,7 @@ class wind_field:
 
         yarray = self.y_location[0,:]
         y_idx = (np.abs(yarray - y)).argmin()
-        
+
         if yarray[y_idx]>= y:
             y_high = y_idx
             y_low = y_idx - 1
@@ -98,8 +90,8 @@ class wind_field:
 
         x_points = [x_low, x_high]
         y_points = [y_low, y_high]
-        
-        
+
+
         a = np.matrix([float(xarray[x_high]) - x, x - float(xarray[x_low])])
 
         b_x = np.matrix([[float(self.x_matrix[x_low,y_low]), float(self.x_matrix[x_low,y_high])],[float(self.x_matrix[x_high,y_low]), float(self.x_matrix[x_high,y_high])]])
@@ -114,41 +106,55 @@ class wind_field:
 
         return [x_value, y_value]
 
-        
-
     def prop_balloon(self, xstart, ystart, tend, dt):
         #this method propagates a balloon through the vector field to determine the uti
         #of releasing the balloon at the starting point.
-        
+
         import numpy as np
 
         t_vect = np.arange(0,tend+dt,dt)
         x_vect = np.zeros((1,len(t_vect)))
         y_vect = np.zeros((1,len(t_vect)))
-        
+
         x_vect[0,0] = xstart
         y_vect[0,0] = ystart
 
         for i in range(1,len(t_vect)):
             [x_vel, y_vel] = self.get_wind(x_vect[0,i-1],y_vect[0,i-1])
-            x_vect[0,i] = x_vect[0,i-1] + x_vel*dt 
-            y_vect[0,i] = y_vect[0,i-1] + y_vel*dt 
-        
+            x_vect[0,i] = x_vect[0,i-1] + x_vel*dt
+            y_vect[0,i] = y_vect[0,i-1] + y_vel*dt
+
         return [x_vect,y_vect]
-#test function:
-n = 10
-m = 10
-length = 2
-matrix = wind_field(n,m,length, 0.25, 0.1)
 
-#test out plot:
-#import subprocess as subp
+    def sample_for_prop(self):
+        '''Takes nsamps samples of the wind field according to
+        the distro variable. Currently the only supported distributions
+        are uniform and normal.'''
+        import numpy as np
 
-#print('X grid size: ' + str(n))
-#print('Y grid size: ' + str(m))
-#matrix.plot_wind_field()
+        x_orig = self.x_matrix
+        y_orig = self.y_matrix
 
-[x,y] = matrix.prop_balloon(2.5,3.5, 5, 0.1)
-print(x)
-print(y)
-matrix.plot_wind_field(x,y)
+        N = self.nsamps
+        size = self.x_matrix.shape
+
+        size_out = (N,) + size
+
+        x_out = np.zeros(size_out)
+        y_out = np.zeros(size_out)
+
+        for i in range(0,N):
+
+            if self.distro == 'Normal':
+                x = np.random.normal(0,1, size) + x_orig
+                y = np.random.normal(0,1, size) + y_orig
+
+            elif self.distro == 'Uniform':
+                x = np.random.uniform(-0.1,0.1, size) + x_orig
+                y = np.random.uniform(-0.1,0.1, size) + y_orig
+
+            x_out[i,:,:] = x
+            y_out[i,:,:] = y
+
+        self.x_samples = x_out
+        self.y_samples = y_out
