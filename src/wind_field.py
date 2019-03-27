@@ -36,7 +36,7 @@ class wind_field:
         self.length = length
 
 
-    def plot_wind_field(self):
+    def plot_wind_field(self, x_traj, y_traj):
         #This method creates a new figure, and plots the wind vector field on a gridded
         #space. matplotlib dependent. arguement is the grid size in meters. 
         import matplotlib.pyplot as plt
@@ -53,6 +53,10 @@ class wind_field:
         plt.figure(1)
 
         plt.quiver(self.x_location, self.y_location, xmat,ymat)
+        plt.hold(True)
+        #TODO: How to make the trajectory plot? 
+        plt.plot(x_traj, y_traj)
+        plt.axis([self.x_location[0,0]-1, self.x_location[-1,1]+1, self.y_location[0,0]-1, self.y_location[-1,1]+1])
         plt.xticks(np.arange(0, length*(matsizex), length))
         plt.yticks(np.arange(0,length*(matsizey), length))
         plt.xlabel('x coordinates (m)')
@@ -105,24 +109,32 @@ class wind_field:
         c = np.matrix([[float(yarray[y_high] - y)], [float(y - yarray[y_low])]])
 
         d = 1/((float(xarray[x_high]-xarray[x_low]))*(float(yarray[y_high]-yarray[y_low])))
-        x_value = d*a*b_x*c
-        y_value = d*a*b_y*c
+        x_value = float(d*a*b_x*c)
+        y_value = float(d*a*b_y*c)
 
         return [x_value, y_value]
 
         
 
-    def prop_balloon(self, xstart, ystart):
+    def prop_balloon(self, xstart, ystart, tend, dt):
         #this method propagates a balloon through the vector field to determine the uti
         #of releasing the balloon at the starting point.
         
-        import scipy.integrate as integrate
-        
-        [x_value, y_value] = self.get_wind(xstart,ystart)
-        
-        print(x_value)
-        print(y_value)
+        import numpy as np
 
+        t_vect = np.arange(0,tend+dt,dt)
+        x_vect = np.zeros((1,len(t_vect)))
+        y_vect = np.zeros((1,len(t_vect)))
+        
+        x_vect[0,0] = xstart
+        y_vect[0,0] = ystart
+
+        for i in range(1,len(t_vect)):
+            [x_vel, y_vel] = self.get_wind(x_vect[0,i-1],y_vect[0,i-1])
+            x_vect[0,i] = x_vect[0,i-1] + x_vel*dt 
+            y_vect[0,i] = y_vect[0,i-1] + y_vel*dt 
+        
+        return [x_vect,y_vect]
 #test function:
 n = 10
 m = 10
@@ -136,5 +148,7 @@ matrix = wind_field(n,m,length, 0.25, 0.1)
 #print('Y grid size: ' + str(m))
 #matrix.plot_wind_field()
 
-matrix.prop_balloon(2.5,3.5)
-
+[x,y] = matrix.prop_balloon(2.5,3.5, 5, 0.1)
+print(x)
+print(y)
+matrix.plot_wind_field(x,y)
