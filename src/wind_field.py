@@ -30,8 +30,6 @@ class wind_field:
         else:
             raise DistroNotRecognized
 
-
-
     def plot_wind_field(self, x_traj, y_traj):
         #This method creates a new figure, and plots the wind vector field on a gridded
         #space. matplotlib dependent. arguement is the grid size in meters.
@@ -125,10 +123,6 @@ class wind_field:
         #of releasing the balloon at the starting point.
 
         import numpy as np
-
-        ''' TODO: Make this work for every sample,
-        - Add a "which" instance that chooses which distribution
-        to propagate '''
 
         if which == 'samples':
             N = self.nsamps
