@@ -1,5 +1,8 @@
-#Function to create an nxm vector field for wind vectors. Outputs an n x m x 2 matrix for x and y wind speeds at each grid point.
-#Alex Hirst
+'''Wind Field class, used for storing and propagating
+balloons through estimated wind fields.
+
+Alex Hirst
+'''
 
 class DistroNotRecognized(Exception):
     message = '\nException: DistroNotRecognizedError:\nDistribution not recognized\
@@ -12,13 +15,12 @@ class WhichSampleNotRecognized(Exception):
 class wind_field:
 
     def __init__(self, vel, loc, length, nsamps, distro):
+        import numpy as np
 
         #Initialize wind and measurement location matrices
-
-
-        self.x_matrix = vel[0,:,:]
+        self.x_matrix = vel[0,:,:] #matrix of x-velocities
         self.y_matrix = vel[1,:,:]
-        self.x_location = loc[0,:,:]
+        self.x_location = loc[0,:,:] #Matrix of x-locations
         self.y_location = loc[1,:,:]
         self.nsamps = nsamps
         self.length = length
@@ -30,9 +32,9 @@ class wind_field:
         else:
             raise DistroNotRecognized
 
-    def plot_wind_field(self, x_traj, y_traj):
+    def plot_wind_field(self):
         #This method creates a new figure, and plots the wind vector field on a gridded
-        #space. matplotlib dependent. arguement is the grid size in meters.
+        #space. matplotlib dependent.
         import matplotlib.pyplot as plt
         import numpy as np
 
@@ -43,13 +45,27 @@ class wind_field:
         matsizex = int(xmat.shape[0])
         matsizey = int(xmat.shape[1])
 
+        #Get x_traj and y_traj (MUST RUN prop_balloon FIRST)
+        x_traj = self.position_history_x
+        y_traj = self.position_history_y
+        nsamps = self.nsamps
+
+        xmean = self.calc_mean(x_traj)
+        ymean = y_traj[0,-1]
         #Plot data on a grid:
-        plt.figure(1)
+        plt.figure()
+        #plt.ion()
 
         plt.quiver(self.x_location, self.y_location, xmat,ymat)
-        plt.hold(True)
+        #plt.hold(True)
         #TODO: How to make the trajectory plot?
-        plt.plot(x_traj, y_traj)
+
+        for i in range(nsamps):
+            plt.plot(x_traj[i,:], y_traj[i,:])
+
+
+        plt.plot(xmean,ymean,'ro')
+
         plt.axis([self.x_location[0,0]-1, self.x_location[-1,1]+1, self.y_location[0,0]-1, self.y_location[-1,1]+1])
         plt.xticks(np.arange(0, length*(matsizex), length))
         plt.yticks(np.arange(0,length*(matsizey), length))
@@ -60,7 +76,10 @@ class wind_field:
 
         #Show plot
         #TODO: How to make this run in background?
-        plt.show()
+        plt.draw()
+        plt.show(block=False)
+        #
+
 
     def get_wind(self, x, y, n, which):
        #function to get wind values from interpolating measurment vector field
@@ -103,12 +122,13 @@ class wind_field:
         x_points = [x_low, x_high]
         y_points = [y_low, y_high]
 
+        #Interpolation:
 
         a = np.matrix([float(xarray[x_high]) - x, x - float(xarray[x_low])])
 
-        b_x = np.matrix([[float(x_matrix[x_low,y_low]), float(x_matrix[x_low,y_high])],[float(self.x_matrix[x_high,y_low]), float(self.x_matrix[x_high,y_high])]])
+        b_x = np.matrix([[float(x_matrix[x_low,y_low]), float(x_matrix[x_low,y_high])], [float(x_matrix[x_high,y_low]), float(x_matrix[x_high,y_high])]])
 
-        b_y = np.matrix([[float(y_matrix[x_low,y_low]), float(y_matrix[x_low,y_high])], [float(self.y_matrix[x_high,y_low]), float(self.y_matrix[x_high,y_high])]])
+        b_y = np.matrix([[float(y_matrix[x_low,y_low]), float(y_matrix[x_low,y_high])], [float(y_matrix[x_high,y_low]), float(y_matrix[x_high,y_high])]])
 
         c = np.matrix([[float(yarray[y_high] - y)], [float(y - yarray[y_low])]])
 
@@ -119,8 +139,9 @@ class wind_field:
         return [x_value, y_value]
 
     def prop_balloon(self, xstart, ystart, tend, dt, which):
-        #this method propagates a balloon through the vector field to determine the uti
-        #of releasing the balloon at the starting point.
+        '''this method propagates a balloon through the vector field to determine the utility
+        of releasing the balloon at the starting point.
+        '''
 
         import numpy as np
 
@@ -144,11 +165,18 @@ class wind_field:
                 x_vect[n,0,i] = x_vect[n,0,i-1] + x_vel*dt
                 y_vect[n,0,i] = y_vect[n,0,i-1] + y_vel*dt
 
-        return [x_vect,y_vect]
+
+        self.position_history_x = np.squeeze(x_vect)
+        self.position_history_y = np.squeeze(y_vect)
+
+        return [np.squeeze(x_vect),np.squeeze(y_vect)]
 
     def sample_for_prop(self):
         '''Takes nsamps samples of the wind field according to
-        the distro variable. Currently the only supported distributions
+        the distro variable. i.e. if we are simulating 500 balloons,
+        this method will create an mxnx500 matrix of wind field measurements.
+
+        Currently the only supported distributions
         are uniform and normal.'''
         import numpy as np
 
@@ -166,7 +194,7 @@ class wind_field:
         for i in range(0,N):
 
             if self.distro == 'Normal':
-                x = np.random.normal(0,1, size) + x_orig
+                x = np.random.normal(0,0.5, size) + x_orig #normal distribution if second argument = 1
                 y = y_orig #+ np.random.normal(0,1, size)
 
             elif self.distro == 'Uniform':
@@ -178,3 +206,10 @@ class wind_field:
 
         self.x_samples = x_out
         self.y_samples = y_out
+
+    def calc_mean(self, x):
+        import numpy as np
+
+        #take last x-values:
+        mean = np.mean(x[:,-1])
+        return mean
