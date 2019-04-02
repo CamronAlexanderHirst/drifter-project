@@ -19,8 +19,6 @@ A = wind_field.wind_field(vel, loc, length, n_samples, 'Normal')
 #test out plot:
 #import subprocess as subp
 
-#print('X grid size: ' + str(n))
-#print('Y grid size: ' + str(m))
 start = [8.1,2.5]
 dt = 0.1
 t_end = 12

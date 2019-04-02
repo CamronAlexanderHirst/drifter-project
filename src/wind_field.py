@@ -25,6 +25,7 @@ class wind_field:
         self.nsamps = nsamps
         self.length = length
 
+        #initialize sampling distributions (can change to matrices to make different for each pt)
         self.nrm_sig = 1
         self.nrm_mean = 0
         self.uni_mean = 0
@@ -96,7 +97,6 @@ class wind_field:
         #TODO: How to make this run in background?
         plt.draw()
         plt.show(block=False)
-        #
 
 
     def get_wind(self, x, y, n, which):
@@ -140,9 +140,7 @@ class wind_field:
         x_points = [x_low, x_high]
         y_points = [y_low, y_high]
 
-        #Interpolation:
-        #print(x_high)
-        #print(x_low)
+        #Interpolation step:
 
         a = np.matrix([float(xarray[x_high]) - x, x - float(xarray[x_low])])
 
