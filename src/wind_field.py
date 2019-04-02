@@ -25,6 +25,16 @@ class wind_field:
         self.nsamps = nsamps
         self.length = length
 
+        self.nrm_sig = 1
+        self.nrm_mean = 0
+        self.uni_mean = 0
+        self.uni_rng = 0.1
+
+        self.plot_samps = False
+        self.plot_samps_mean = False
+        self.plot_orig = False
+        self.plot_orig_mean = False
+
         if distro == 'Normal':
             self.distro = 'Normal'
         elif distro == 'Uniform':
@@ -46,25 +56,33 @@ class wind_field:
         matsizey = int(xmat.shape[1])
 
         #Get x_traj and y_traj (MUST RUN prop_balloon FIRST)
-        x_traj = self.position_history_x
-        y_traj = self.position_history_y
-        nsamps = self.nsamps
-
-        xmean = self.calc_mean(x_traj)
-        ymean = y_traj[0,-1]
         #Plot data on a grid:
-        plt.figure()
+
+        plt.figure(figsize=(15,15))
         #plt.ion()
 
         plt.quiver(self.x_location, self.y_location, xmat,ymat)
         #plt.hold(True)
         #TODO: How to make the trajectory plot?
 
-        for i in range(nsamps):
-            plt.plot(x_traj[i,:], y_traj[i,:])
+        if self.plot_samps:
+            x_traj = self.position_history_x_samps
+            y_traj = self.position_history_y_samps
+            for i in range(self.nsamps):
+                plt.plot(x_traj[i,:], y_traj[i,:])
+
+        if self.plot_samps_mean:
+            plt.plot(self.xmean_samps,self.position_history_y_samps[0,-1],'ro', markersize=8)
+
+        if self.plot_orig:
+            x_traj = self.position_history_x_orig
+            y_traj = self.position_history_y_orig
+            plt.plot(x_traj,y_traj)
+
+        if self.plot_orig_mean:
+            plt.plot(self.xmean_orig,self.position_history_y_orig[-1],'bo', markersize=8)
 
 
-        plt.plot(xmean,ymean,'ro')
 
         plt.axis([self.x_location[0,0]-1, self.x_location[-1,1]+1, self.y_location[0,0]-1, self.y_location[-1,1]+1])
         plt.xticks(np.arange(0, length*(matsizex), length))
@@ -123,6 +141,8 @@ class wind_field:
         y_points = [y_low, y_high]
 
         #Interpolation:
+        #print(x_high)
+        #print(x_low)
 
         a = np.matrix([float(xarray[x_high]) - x, x - float(xarray[x_low])])
 
@@ -138,20 +158,16 @@ class wind_field:
 
         return [x_value, y_value]
 
-    def prop_balloon(self, xstart, ystart, tend, dt, which):
+    def prop_balloon(self, xstart, ystart, tend, dt):
         '''this method propagates a balloon through the vector field to determine the utility
         of releasing the balloon at the starting point.
         '''
 
         import numpy as np
 
-        if which == 'samples':
-            N = self.nsamps
-        elif which == 'original':
-            N = 1
-        else:
-            raise WhichSampleNotRecognized
+        print('start')
 
+        N = self.nsamps
         t_vect = np.arange(0,tend+dt,dt)
         x_vect = np.zeros((N,1,len(t_vect)))
         y_vect = np.zeros((N,1,len(t_vect)))
@@ -161,15 +177,34 @@ class wind_field:
 
         for n in range(0,N):
             for i in range(1,len(t_vect)):
-                [x_vel, y_vel] = self.get_wind(x_vect[n,0,i-1],y_vect[n,0,i-1],n, which)
+                [x_vel, y_vel] = self.get_wind(x_vect[n,0,i-1], y_vect[n,0,i-1], n,'samples')
                 x_vect[n,0,i] = x_vect[n,0,i-1] + x_vel*dt
                 y_vect[n,0,i] = y_vect[n,0,i-1] + y_vel*dt
 
 
-        self.position_history_x = np.squeeze(x_vect)
-        self.position_history_y = np.squeeze(y_vect)
+        self.position_history_x_samps = np.squeeze(x_vect)
+        self.position_history_y_samps = np.squeeze(y_vect)
 
-        return [np.squeeze(x_vect),np.squeeze(y_vect)]
+        print('pass')
+        N = 1
+        t_vect = np.arange(0,tend+dt,dt)
+        x_vect = np.zeros((N,1,len(t_vect)))
+        y_vect = np.zeros((N,1,len(t_vect)))
+
+        x_vect[:,0,0] = xstart
+        y_vect[:,0,0] = ystart
+
+        for n in range(0,N):
+            for i in range(1,len(t_vect)):
+                [x_vel, y_vel] = self.get_wind(x_vect[n,0,i-1],y_vect[n,0,i-1],n,'original')
+                x_vect[n,0,i] = x_vect[n,0,i-1] + x_vel*dt
+                y_vect[n,0,i] = y_vect[n,0,i-1] + y_vel*dt
+
+
+        self.position_history_x_orig = np.squeeze(x_vect)
+        self.position_history_y_orig = np.squeeze(y_vect)
+
+        #return [np.squeeze(x_vect),np.squeeze(y_vect)]
 
     def sample_for_prop(self):
         '''Takes nsamps samples of the wind field according to
@@ -194,11 +229,11 @@ class wind_field:
         for i in range(0,N):
 
             if self.distro == 'Normal':
-                x = np.random.normal(0,0.5, size) + x_orig #normal distribution if second argument = 1
+                x = np.random.normal(self.nrm_mean,self.nrm_sig, size) + x_orig #normal distribution if second argument = 1
                 y = y_orig #+ np.random.normal(0,1, size)
 
             elif self.distro == 'Uniform':
-                x = np.random.uniform(-0.1,0.1, size) + x_orig
+                x = np.random.uniform(self.uni_mean-self.uni_rng,self.uni_mean+self.uni_rng, size) + x_orig
                 y = y_orig #+ np.random.uniform(-0.1,0.1, size)
 
             x_out[i,:,:] = x
@@ -207,9 +242,13 @@ class wind_field:
         self.x_samples = x_out
         self.y_samples = y_out
 
-    def calc_mean(self, x):
+    def calc_mean(self):
         import numpy as np
 
         #take last x-values:
-        mean = np.mean(x[:,-1])
-        return mean
+        self.xmean_samps = np.mean(self.position_history_x_samps[:,-1])
+        self.xmean_orig = np.mean(self.position_history_x_orig[-1])
+
+    def calc_util(self, xgoal, scale):
+
+        return abs(xgoal - xmean_samps)*scale
