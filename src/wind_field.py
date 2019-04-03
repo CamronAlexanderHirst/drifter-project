@@ -18,8 +18,10 @@ class wind_field:
         #Initialize wind and measurement location matrices
         self.x_matrix = vel[0,:,:] #matrix of x-velocities
         self.y_matrix = vel[1,:,:]
+
         self.x_location = loc[0,:,:] #Matrix of x-locations
         self.y_location = loc[1,:,:]
+
         self.nsamps = nsamps
         self.length = length
 
@@ -43,8 +45,8 @@ class wind_field:
         xmat = self.x_matrix
         ymat = self.y_matrix
         length = self.length
-        matsizex = int(xmat.shape[0])
-        matsizey = int(xmat.shape[1])
+        matsizex = int(xmat.shape[1])
+        matsizey = int(xmat.shape[0])
 
         self.calc_mean()
 
@@ -77,7 +79,7 @@ class wind_field:
 
 
 
-        plt.axis([self.x_location[0,0]-1, self.x_location[-1,1]+1, self.y_location[0,0]-1, self.y_location[-1,1]+1])
+        plt.axis([self.x_location[0,0]-1, self.x_location[1,-1]+1, self.y_location[0,0]-1, self.y_location[-1,1]+1])
         plt.xticks(np.arange(0, length*(matsizex), length))
         plt.yticks(np.arange(0,length*(matsizey), length))
         plt.xlabel('x coordinates (m)')
@@ -105,8 +107,8 @@ class wind_field:
             raise WhichSampleNotRecognized
 
         #get nearest x and y indices:
-        xarray = self.x_location[:,0]
-        yarray = self.y_location[0,:]
+        xarray = self.x_location[0,:]
+        yarray = self.y_location[:,0]
 
         x_idx = (np.abs(xarray - x)).argmin()
 
@@ -121,7 +123,7 @@ class wind_field:
 
         y_idx = (np.abs(yarray - y)).argmin()
 
-        if yarray[y_idx]>= y:
+        if yarray[y_idx] >= y:
             y_high = y_idx
             y_low = y_idx - 1
 
@@ -133,6 +135,7 @@ class wind_field:
         y_points = [y_low, y_high]
 
         #Interpolation step:
+        #See bilinear interpolation page on wikipedia
 
         a = np.matrix([float(xarray[x_high]) - x, x - float(xarray[x_low])])
 
@@ -143,6 +146,7 @@ class wind_field:
         c = np.matrix([[float(yarray[y_high] - y)], [float(y - yarray[y_low])]])
 
         d = 1/((float(xarray[x_high]-xarray[x_low]))*(float(yarray[y_high]-yarray[y_low])))
+
         x_value = float(d*a*b_x*c)
         y_value = float(d*a*b_y*c)
 
@@ -155,7 +159,7 @@ class wind_field:
 
         import numpy as np
 
-
+        #Propagate samples:
         N = self.nsamps
         t_vect = np.arange(0,tend+dt,dt)
         x_vect = np.zeros((N,1,len(t_vect)))
@@ -175,6 +179,7 @@ class wind_field:
         self.position_history_y_samps = np.squeeze(y_vect)
 
 
+        #Propagate original:
         N = 1
         t_vect = np.arange(0,tend+dt,dt)
         x_vect = np.zeros((N,1,len(t_vect)))
@@ -185,7 +190,7 @@ class wind_field:
 
         for n in range(0,N):
             for i in range(1,len(t_vect)):
-                [x_vel, y_vel] = self.get_wind(x_vect[n,0,i-1],y_vect[n,0,i-1],n,'original')
+                [x_vel, y_vel] = self.get_wind(x_vect[n,0,i-1],y_vect[n,0,i-1], n,'original')
                 x_vect[n,0,i] = x_vect[n,0,i-1] + x_vel*dt
                 y_vect[n,0,i] = y_vect[n,0,i-1] + y_vel*dt
 
@@ -208,7 +213,5 @@ class wind_field:
         from scipy.stats import norm
 
         mu, std = norm.fit(self.position_history_x_samps[:,-1])
-
-
 
         return [mu, std]

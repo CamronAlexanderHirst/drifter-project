@@ -26,8 +26,8 @@ class field_generator:
                 Matrix[0,i,j] = Matrix[0,i,j-1] + np.random.uniform(-1*dist,dist)
 
             for j in range(0,m):
-                location_Matrix[0,i,j] = i*length
-                location_Matrix[1,i,j] = j*length
+                location_Matrix[1,i,j] = i*length
+                location_Matrix[0,i,j] = j*length
 
 
         self.vel = Matrix
