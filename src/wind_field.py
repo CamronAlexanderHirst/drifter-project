@@ -4,9 +4,7 @@ balloons through estimated wind fields.
 Alex Hirst
 '''
 
-class DistroNotRecognized(Exception):
-    message = '\nException: DistroNotRecognizedError:\nDistribution not recognized\
-     \nTry either Normal or Uniform '
+
 
 class WhichSampleNotRecognized(Exception):
      message = '\nException: WhichSampleNotRecognizedError:\nWhich not recognized\
@@ -14,7 +12,7 @@ class WhichSampleNotRecognized(Exception):
 
 class wind_field:
 
-    def __init__(self, vel, loc, length, nsamps, distro):
+    def __init__(self, vel, loc, length, nsamps, samps):
         import numpy as np
 
         #Initialize wind and measurement location matrices
@@ -25,23 +23,15 @@ class wind_field:
         self.nsamps = nsamps
         self.length = length
 
-        #initialize sampling distributions (can change to matrices to make different for each pt)
-        self.nrm_sig = 1
-        self.nrm_mean = 0
-        self.uni_mean = 0
-        self.uni_rng = 0.1
-
         self.plot_samps = False
         self.plot_samps_mean = False
         self.plot_orig = False
         self.plot_orig_mean = False
 
-        if distro == 'Normal':
-            self.distro = 'Normal'
-        elif distro == 'Uniform':
-            self.distro = 'Uniform'
-        else:
-            raise DistroNotRecognized
+        self.x_samples = samps[0]
+        self.y_samples = samps[1]
+
+
 
     def plot_wind_field(self):
         #This method creates a new figure, and plots the wind vector field on a gridded
@@ -59,7 +49,7 @@ class wind_field:
         #Get x_traj and y_traj (MUST RUN prop_balloon FIRST)
         #Plot data on a grid:
 
-        plt.figure(figsize=(15,15))
+        plt.figure(figsize=(10,10))
         #plt.ion()
 
         plt.quiver(self.x_location, self.y_location, xmat,ymat)
@@ -163,7 +153,6 @@ class wind_field:
 
         import numpy as np
 
-        print('start')
 
         N = self.nsamps
         t_vect = np.arange(0,tend+dt,dt)
@@ -183,7 +172,7 @@ class wind_field:
         self.position_history_x_samps = np.squeeze(x_vect)
         self.position_history_y_samps = np.squeeze(y_vect)
 
-        print('pass')
+
         N = 1
         t_vect = np.arange(0,tend+dt,dt)
         x_vect = np.zeros((N,1,len(t_vect)))
@@ -204,41 +193,7 @@ class wind_field:
 
         #return [np.squeeze(x_vect),np.squeeze(y_vect)]
 
-    def sample_for_prop(self):
-        '''Takes nsamps samples of the wind field according to
-        the distro variable. i.e. if we are simulating 500 balloons,
-        this method will create an mxnx500 matrix of wind field measurements.
 
-        Currently the only supported distributions
-        are uniform and normal.'''
-        import numpy as np
-
-        x_orig = self.x_matrix
-        y_orig = self.y_matrix
-
-        N = self.nsamps
-        size = self.x_matrix.shape
-
-        size_out = (N,) + size
-
-        x_out = np.zeros(size_out)
-        y_out = np.zeros(size_out)
-
-        for i in range(0,N):
-
-            if self.distro == 'Normal':
-                x = np.random.normal(self.nrm_mean,self.nrm_sig, size) + x_orig #normal distribution if second argument = 1
-                y = y_orig #+ np.random.normal(0,1, size)
-
-            elif self.distro == 'Uniform':
-                x = np.random.uniform(self.uni_mean-self.uni_rng,self.uni_mean+self.uni_rng, size) + x_orig
-                y = y_orig #+ np.random.uniform(-0.1,0.1, size)
-
-            x_out[i,:,:] = x
-            y_out[i,:,:] = y
-
-        self.x_samples = x_out
-        self.y_samples = y_out
 
     def calc_mean(self):
         import numpy as np
@@ -248,5 +203,9 @@ class wind_field:
         self.xmean_orig = np.mean(self.position_history_x_orig[-1])
 
     def calc_util(self, xgoal, scale):
+        from scipy.stats import norm
 
-        return abs(xgoal - xmean_samps)*scale
+        mu, std = norm.fit(position_history_x_samps[:,-1])
+
+
+        return [mu, std]

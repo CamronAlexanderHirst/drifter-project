@@ -1,7 +1,7 @@
 #Used to test out classes and functions
 
 import wind_field
-from gen_random_field import generate_wind_field
+from gen_random_field import field_generator
 from visualizer import animator
 import timeit
 import numpy as np
@@ -11,10 +11,12 @@ start_time = timeit.timeit()
 n = 20
 m = 10
 length = 2
-[vel,loc,length] = generate_wind_field(n ,m , length, 0, 0.25)
-
 n_samples = 100
-A = wind_field.wind_field(vel, loc, length, n_samples, 'Normal')
+
+field = field_generator(n ,m , length, 0, 0.25, n_samples, 'Normal')
+field.sample()
+
+A = wind_field.wind_field(field.vel, field.loc, length, field.nsamps, field.samples)
 
 #test out plot:
 #import subprocess as subp
@@ -24,7 +26,7 @@ dt = 0.1
 t_end = 12
 A.nrm_mean = 0 #Can use matrix here to specify distributions for each measurement
 A.nrm_sig = 1 #Can use matrix here to specify distributions for each measurement
-A.sample_for_prop()
+
 A.prop_balloon(start[0], start[1], t_end, dt)
 
 A.calc_mean()
