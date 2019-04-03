@@ -13,9 +13,11 @@ import matplotlib.pyplot as plt
 
 class SoarerDrifterMDP:
 
-    def __init__(self):
+    def __init__(self, N):
 
-        self.size = (20, 100)   # Size of the discrete world NxM
+        # TODO: Match discrete size with balloon grid
+        # TODO: Currently not used for anything
+        self.size = (20, N)   # Size of the discrete world NxM
 
         # Discretized control space - (sUAS control, balloon control)
         # sUAS: 0->"turn" left, 1->forward, 2->"turn" right
@@ -23,6 +25,7 @@ class SoarerDrifterMDP:
         self.control_space = [[0, 0], [1, 0], [2, 0],
                               [0, 1], [1, 1], [2, 1]]
 
+        # TODO: Chosen probabilities are arbitrary.
         self.transition_probability = np.array([[0.75, 0.125, 0.125],
                                                 [0.125, 0.75, 0.125],
                                                 [0.125, 0.125, 0.75]])
@@ -49,9 +52,9 @@ class SoarerDrifterMDP:
 
         # Take action here!
         x_new = self.suas_control(transition_row)
-        # Calcualte the reward!
+        # Calculate the reward!
         reward = self.calculate_reward(x_new, action)
-        self.x_old = x_new
+        self.x_old = np.copy(x_new)
         self.state_history.append(np.copy(x_new))
 
         return reward
@@ -91,21 +94,6 @@ class SoarerDrifterMDP:
 
         return total_reward
 
-
-if __name__ == '__main__':
-
-        # Quick Test for MDP
-        mdp_tester = SoarerDrifterMDP()
-        test_steps = 100
-
-        plt.figure()
-        plt.xlabel('Forward Direction')
-        plt.ylabel('Lateral Direction')
-        plt.grid()
-
-        for i in range(1, test_steps):
-            # Fly level!
-            mdp_tester.take_action([1, 0])
-            plt.plot(mdp_tester.state_history[-1][1], mdp_tester.state_history[-1][0], 'kD')
-
-        plt.show()
+    def reset_mdp(self):
+        self.x_old = self.x0
+        self.state_history = [np.copy(self.x0)]
