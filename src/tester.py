@@ -23,11 +23,22 @@ A = wind_field.wind_field(field.vel, field.loc, length, field.nsamps, field.samp
 #test out plot:
 #import subprocess as subp
 
-start = [8.1,2.5]
 dt = 0.1
 t_end = 12
 
-start = [[8,2], [9,2], [10,2]]
+
+dx = 0.25
+xstart = 8
+xend = 12
+ystart = 2
+num_release_pts = int((xend-xstart)/dx)
+print(num_release_pts)
+
+#generate start vector
+start = []
+for i in np.linspace(xstart, xend, num_release_pts):
+    start.append([xstart + i, ystart])
+
 
 for start in start:
     A.prop_balloon(start[0], start[1], t_end, dt)
