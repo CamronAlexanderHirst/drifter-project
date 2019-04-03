@@ -46,6 +46,8 @@ class wind_field:
         matsizex = int(xmat.shape[0])
         matsizey = int(xmat.shape[1])
 
+        self.calc_mean()
+
         #Get x_traj and y_traj (MUST RUN prop_balloon FIRST)
         #Plot data on a grid:
 
@@ -205,7 +207,8 @@ class wind_field:
     def calc_util(self, xgoal, scale):
         from scipy.stats import norm
 
-        mu, std = norm.fit(position_history_x_samps[:,-1])
+        mu, std = norm.fit(self.position_history_x_samps[:,-1])
+
 
 
         return [mu, std]
