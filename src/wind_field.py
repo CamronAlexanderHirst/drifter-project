@@ -46,8 +46,8 @@ class wind_field:
         xmat = self.x_matrix
         ymat = self.y_matrix
         length = self.length
-        matsizex = int(xmat.shape[1])
-        matsizey = int(xmat.shape[0])
+        self.matsizex = int(xmat.shape[1])
+        self.matsizey = int(xmat.shape[0])
 
         self.calc_mean()
 
@@ -81,8 +81,8 @@ class wind_field:
 
 
         plt.axis([self.x_location[0,0]-1, self.x_location[1,-1]+1, self.y_location[0,0]-1, self.y_location[-1,1]+1])
-        plt.xticks(np.arange(0, length*(matsizex), length))
-        plt.yticks(np.arange(0,length*(matsizey), length))
+        plt.xticks(np.arange(0, length*(self.matsizex), length))
+        plt.yticks(np.arange(0,length*(self.matsizey), length))
         plt.xlabel('x coordinates (m)')
         plt.ylabel('y coordiantes (m)')
 
@@ -94,8 +94,7 @@ class wind_field:
         plt.show(block=False)
 
 
-    def get_wind(self, x, y, n, which): #SWAPPED Y and X HERE - Temporary solution (matrix indexing screwed me here)
-        #Need to fix this function to reflect what i think it is
+    def get_wind(self, x, y, n, which):
        #function to get wind values from interpolating measurment vector field
         import numpy as np
 

@@ -14,7 +14,7 @@ import time as t
 n = 20#height of field (y)
 m = 20 #width of field (x)
 length = 1
-n_samples = 100
+n_samples = 50
 
 field = field_generator(n ,m , length, 0, 0.15, n_samples, 'Normal')
 field.nrm_mean = 0 #Can use matrix here to specify distributions for each measurement
@@ -30,8 +30,8 @@ print(field.loc[1,:,:])
 
 
 
-dt = 0.1
-t_end = 12
+dt = 0.25
+t_end = 12.5
 dx = 1
 xstart = 8
 xend = 12
@@ -69,15 +69,15 @@ A.plot_wind_field()
 
 
 input("press enter to animate")
-'''
 
+#Animate!!!
 vis = animator()
 vis.init_live_plot(A)
 
 for time in range(int(t_end/dt)):
-    t.sleep(0.1)
-    for j in range(n_samples):
-        vis.measurement_update(A, j, time)
+    t.sleep(0.15)
+    vis.measurement_update(A, time)
+
+
 
 input("press enter to end")
-'''
