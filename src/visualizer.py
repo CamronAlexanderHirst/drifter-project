@@ -28,8 +28,6 @@ class animator:
             x_lim_max = wind_field.x_location[1,-1]+1
             y_lim_max = wind_field.y_location[-1,0]+1
 
-            print(y_lim_max)
-
             plt.xlim([x_lim_min, x_lim_max])
             plt.ylim([y_lim_min, y_lim_max])
 
