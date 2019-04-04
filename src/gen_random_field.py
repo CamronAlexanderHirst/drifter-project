@@ -28,12 +28,9 @@ class field_generator:
             for j in range(0,m):
                 location_Matrix[1,i,j] = i*length #matrix of y positions
                 location_Matrix[0,i,j] = j*length #matrix of x positions
-
-
+                
         self.vel = Matrix
         self.loc = location_Matrix
-
-        length = length
 
         #Initialize wind and measurement location matrices
         self.x_matrix = self.vel[0,:,:] #matrix of x-velocities

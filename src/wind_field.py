@@ -52,14 +52,10 @@ class wind_field:
         self.calc_mean()
 
         #Get x_traj and y_traj (MUST RUN prop_balloon FIRST)
-        #Plot data on a grid:
 
         plt.figure(figsize=(10,10))
-        #plt.ion()
 
         plt.quiver(self.x_location, self.y_location, xmat,ymat)
-        #plt.hold(True)
-        #TODO: How to make the trajectory plot?
 
         if self.plot_samps:
             x_traj = self.position_history_x_samps
@@ -135,10 +131,7 @@ class wind_field:
         x_points = [x_low, x_high]
         y_points = [y_low, y_high]
 
-        #print(x_points)
-        #print(y_points)
-
-        #Interpolation step:
+        #Bilinear Interpolation step:
         #See bilinear interpolation page on wikipedia
 
         a = np.matrix([float(xarray[x_high]) - x, x - float(xarray[x_low])])
@@ -164,7 +157,6 @@ class wind_field:
         import numpy as np
 
         #Propogate samples:
-
         N = self.nsamps
         t_vect = np.arange(0,tend+dt,dt)
         x_vect = np.zeros((N,1,len(t_vect)))
@@ -180,8 +172,9 @@ class wind_field:
                 y_vect[n,0,i] = y_vect[n,0,i-1] + y_vel*dt
 
 
-        self.position_history_x_samps = np.squeeze(x_vect)
-        self.position_history_y_samps = np.squeeze(y_vect)
+        #position history of balloon propagated through sampled fields
+        self.position_history_x_samps = np.squeeze(x_vect) #x-position
+        self.position_history_y_samps = np.squeeze(y_vect) #y-position
 
 
         #Propagate original:
@@ -199,11 +192,9 @@ class wind_field:
                 x_vect[n,0,i] = x_vect[n,0,i-1] + x_vel*dt
                 y_vect[n,0,i] = y_vect[n,0,i-1] + y_vel*dt
 
-
-        self.position_history_x_orig = np.squeeze(x_vect)
-        self.position_history_y_orig = np.squeeze(y_vect)
-
-        #return [np.squeeze(x_vect),np.squeeze(y_vect)]
+        #position history of balloon propagated through original field
+        self.position_history_x_orig = np.squeeze(x_vect) #x-position
+        self.position_history_y_orig = np.squeeze(y_vect) #y-position
 
 
 

@@ -12,7 +12,7 @@ import time as t
 
 #Generate a nxm field
 n = 20#height of field (y)
-m = 20 #width of field (x)
+m = 40 #width of field (x)
 length = 1
 n_samples = 50
 
@@ -36,8 +36,7 @@ dx = 1
 xstart = 8
 xend = 12
 ystart = 2
-num_release_pts = 1#int((xend-xstart)/dx)
-#print(num_release_pts)
+num_release_pts = 2
 
 #generate start vector
 start = []
@@ -60,13 +59,12 @@ A.plot_orig_mean = True
 #A.plot_samps_mean = True
 
 
-#print(end_time - start_time)
+
 
 input("press enter to plot")
 
-
+#Plot the wind field
 A.plot_wind_field()
-
 
 input("press enter to animate")
 
