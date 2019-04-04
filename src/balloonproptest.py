@@ -1,11 +1,12 @@
-#Used to test out classes and functions
+#Used to test out balloon prop
 
 import wind_field
-from gen_random_field import field_generator
-from visualizer import animator
+import gen_random_field
+import visualizer
 import timeit
 import numpy as np
 import time as t
+
 
 
 #test function:
@@ -14,11 +15,11 @@ import time as t
 n = 20#height of field (y)
 m = 40 #width of field (x)
 length = 1
-n_samples = 50
+n_samples = 100
 
-field = field_generator(n ,m , length, 0, 0.15, n_samples, 'Normal')
+field = gen_random_field.field_generator(n ,m , length, 0, 0.15, n_samples, 'Normal')
 field.nrm_mean = 0 #Can use matrix here to specify distributions for each measurement
-field.nrm_sig = 0.5 #Can use matrix here to specify distributions for each measurement
+field.nrm_sig = 1 #Can use matrix here to specify distributions for each measurement
 field.sample()
 
 A = wind_field.wind_field(field.vel, field.loc, length, field.nsamps, field.samples)
@@ -69,7 +70,7 @@ A.plot_wind_field()
 input("press enter to animate")
 
 #Animate!!!
-vis = animator()
+vis = visualizer.animator()
 vis.init_live_plot(A)
 
 for time in range(int(t_end/dt)):
