@@ -34,6 +34,11 @@ class wind_field:
         self.x_samples = samps[0]
         self.y_samples = samps[1]
 
+        self.matsizex = int(self.x_matrix.shape[1])
+        self.matsizey = int(self.x_matrix.shape[0])
+
+        self.save_plot = False
+
 
 
     def plot_wind_field(self):
@@ -46,14 +51,13 @@ class wind_field:
         xmat = self.x_matrix
         ymat = self.y_matrix
         length = self.length
-        self.matsizex = int(xmat.shape[1])
-        self.matsizey = int(xmat.shape[0])
+
 
         self.calc_mean()
 
         #Get x_traj and y_traj (MUST RUN prop_balloon FIRST)
 
-        plt.figure(figsize=(10,10))
+        self.fig = plt.figure(figsize=(10,10))
 
         plt.quiver(self.x_location, self.y_location, xmat,ymat)
 
@@ -64,7 +68,7 @@ class wind_field:
                 plt.plot(x_traj[i,:], y_traj[i,:])
 
         if self.plot_samps_mean:
-            plt.plot(self.xmean_samps,self.position_history_y_samps[0,-1],'ro', markersize=8)
+            plt.plot(self.xmean_samps,self.position_history_y_samps[0,-1],'ro', markersize=10)
 
         if self.plot_orig:
             x_traj = self.position_history_x_orig
@@ -79,15 +83,20 @@ class wind_field:
         plt.axis([self.x_location[0,0]-1, self.x_location[1,-1]+1, self.y_location[0,0]-1, self.y_location[-1,1]+1])
         plt.xticks(np.arange(0, length*(self.matsizex), length))
         plt.yticks(np.arange(0,length*(self.matsizey), length))
-        plt.xlabel('x coordinates (m)')
-        plt.ylabel('y coordiantes (m)')
+        plt.xlabel('X')
+        plt.ylabel('Y')
 
         plt.grid(True ,which = 'major', axis = 'both')
 
         #Show plot
         #TODO: How to make this run in background?
         plt.draw()
+        if self.save_plot == True:
+            print('saved fig')
+            plt.savefig('./outputs/plot.png')
         plt.show(block=False)
+
+
 
 
     def get_wind(self, x, y, n, which):

@@ -12,9 +12,12 @@ class animator:
     def __init__(self):
 
             self.line_list = [] #create a line list
-            self.trail_length = 50
+            self.trail_length = 500
+            self.save = False
 
     def init_live_plot(self, wind_field):
+
+            #Initialize live plot
 
             self.fig = plt.figure(figsize=(10,10))
 
@@ -41,8 +44,8 @@ class animator:
             plt.xlim([x_lim_min, x_lim_max])
             plt.ylim([y_lim_min, y_lim_max])
 
-            plt.xlabel('X Distance (m)')
-            plt.ylabel('Y Distance (m)')
+            plt.xlabel('X')
+            plt.ylabel('Y')
             plt.grid()
 
             num_agents = wind_field.nsamps
@@ -53,6 +56,8 @@ class animator:
 
             plt.show(block=False)
             plt.tight_layout()
+
+
 
     def measurement_update(self, wind_field, time):
             # This updates all agents at a time
@@ -68,3 +73,24 @@ class animator:
 
             self.fig.canvas.draw()
             self.fig.canvas.flush_events()
+
+            self.timesteps = time
+
+            if self.save == True:
+                plt.savefig('./figures/'+str(time)+'.png')
+
+    def make_gif(self):
+
+            print('making gif...')
+            import imageio
+            images = []
+
+            filenames = []
+            for i in range(self.timesteps+1):
+                filenames.append('./figures/'+str(i)+'.png')
+
+            for filename in filenames:
+                images.append(imageio.imread(filename))
+            imageio.mimsave('./outputs/movie.gif', images, duration=0.2)
+
+            print('done')

@@ -1,20 +1,21 @@
 #Used to test out balloon prop
 
-import wind_field
-import gen_random_field
-import visualizer
+from src import wind_field
+from src import gen_random_field
+from src import visualizer
 import timeit
 import numpy as np
 import time as t
+from matplotlib.animation import FuncAnimation
 
 
 
 #test function:
 
 #Generate a nxm field
-n = 20#height of field (y)
-m = 40 #width of field (x)
-length = 1
+n = 10#cell height of field (y)
+m = 15 #cell width of field (x)
+length = 3
 n_samples = 100
 
 field = gen_random_field.field_generator(n ,m , length, 0, 0.15, n_samples, 'Normal')
@@ -31,13 +32,13 @@ print(field.loc[1,:,:])
 
 
 
-dt = 0.25
-t_end = 12.5
+dt = 0.5
+t_end = 20
 dx = 1
-xstart = 8
-xend = 12
+xstart = 20 #absolute starting point
+xend = 20 #abosulte end point
 ystart = 2
-num_release_pts = 2
+num_release_pts = 1
 
 #generate start vector
 start = []
@@ -54,10 +55,10 @@ for start in start:
     print('Std: ' + str(stats[1]))
 
 
-A.plot_orig = True
-A.plot_orig_mean = True
-#A.plot_samps = True
-#A.plot_samps_mean = True
+#A.plot_orig = True
+#A.plot_orig_mean = True
+A.plot_samps = True
+A.plot_samps_mean = True
 
 
 
@@ -67,16 +68,26 @@ input("press enter to plot")
 #Plot the wind field
 A.plot_wind_field()
 
+savefig = input('save figure? (y/n)')
+if savefig == 'y':
+    print('saving')
+    A.save_plot = True
+    A.plot_wind_field()
+
 input("press enter to animate")
+
 
 #Animate!!!
 vis = visualizer.animator()
+vis.save = True
 vis.init_live_plot(A)
 
 for time in range(int(t_end/dt)):
-    t.sleep(0.15)
+    t.sleep(0.1)
     vis.measurement_update(A, time)
 
 
-
-input("press enter to end")
+input("press enter to create gif")
+gif = input('make gif? (y/n)')
+if gif == 'y':
+    vis.make_gif()
