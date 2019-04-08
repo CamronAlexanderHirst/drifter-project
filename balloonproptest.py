@@ -1,8 +1,12 @@
-#Used to test out balloon prop
+#!/usr/bin/env python3
 
+'''Used to test out balloon prop
+Author: Alex Hirst
+'''
 from src import wind_field
 from src import gen_random_field
 from src import visualizer
+import clear_folder
 import timeit
 import numpy as np
 import time as t
@@ -32,8 +36,9 @@ print(field.loc[1,:,:])
 
 
 
-dt = 0.5
-t_end = 20
+A.dt = 0.5
+A.t_end = 20
+
 dx = 1
 xstart = 20 #absolute starting point
 xend = 20 #abosulte end point
@@ -91,3 +96,6 @@ input("press enter to create gif")
 gif = input('make gif? (y/n)')
 if gif == 'y':
     vis.make_gif()
+
+#Clear the figures folder
+clear_folder.clear_figure_folder()

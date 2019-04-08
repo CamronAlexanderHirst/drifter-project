@@ -1,6 +1,6 @@
 """
 MDP - Markov Decision Process class for the Soarer-Drifter system
-Author: John Jackson
+Author: John Jackson and Alex Hirst
 """
 
 import numpy as np
@@ -34,6 +34,8 @@ class SoarerDrifterMDP:
         self.x0 = np.array([10, 0])  # Starting cell of the sUAS
         self.x_old = self.x0
         self.state_history = [np.copy(self.x0)]
+
+        self.planning_horizon = 5
 
     def take_action(self, action):
 
@@ -82,7 +84,7 @@ class SoarerDrifterMDP:
         balloon_action = action[1]
 
         if balloon_action > 0:
-            # progpgate balloon things here
+            self.field.prop_balloon()
             balloon_reward = 11.
         else:
             balloon_reward = -1.
@@ -94,6 +96,14 @@ class SoarerDrifterMDP:
 
         return total_reward
 
+
     def reset_mdp(self):
         self.x_old = self.x0
         self.state_history = [np.copy(self.x0)]
+
+    def import_windfield(self, field):
+        self.field = field
+        #align windfield space here with self.space?
+
+    def import_actionspace(self, actionspace):
+        self.actionspace = actionspace

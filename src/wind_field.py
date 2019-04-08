@@ -39,6 +39,9 @@ class wind_field:
 
         self.save_plot = False
 
+        self.tend = 20
+        self.dt = 0.5
+
 
 
     def plot_wind_field(self):
@@ -158,13 +161,15 @@ class wind_field:
 
         return [x_value, y_value]
 
-    def prop_balloon(self, xstart, ystart, tend, dt):
+    def prop_balloon(self, xstart, ystart):
         '''this method propagates a balloon through the vector field to determine the utility
         of releasing the balloon at the starting point.
         '''
 
         import numpy as np
 
+        tend = self.tend
+        dt = self.dt
         #Propogate samples:
         N = self.nsamps
         t_vect = np.arange(0,tend+dt,dt)
