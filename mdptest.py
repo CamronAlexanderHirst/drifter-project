@@ -1,41 +1,54 @@
 """
 Test Script for the MDP
+Alex Hirst
 """
 
 import matplotlib
-matplotlib.use('TkAgg')
+#matplotlib.use('TkAgg') #for macs
 
 import matplotlib.pyplot as plt
 
 from src import mdp
+from src import wind_field
+from src import gen_random_field
+from src import visualizer
 
 
 test_steps = 100
-mdp_process = mdp.SoarerDrifterMDP(test_steps)
+n = 10#cell height of field (y)
+m = 15 #cell width of field (x)
+length = 3 #unit width
+n_samples = 25 #number of balloons propagated at each space
 
-plt.figure()
-plt.xlabel('Forward Direction')
-plt.ylabel('Lateral Direction')
-plt.grid()
+field = gen_random_field.field_generator(n ,m , length, 0, 0.15, n_samples, 'Normal')
+field.nrm_mean = 0 #Can use matrix here to specify distributions for each measurement
+field.nrm_sig = 1 #Can use matrix here to specify distributions for each measurement
+field.sample()
 
-# Fly Level
-for i in range(1, test_steps):
-    # Fly level!
-    mdp_process.take_action([1, 0])
-    plt.plot(mdp_process.state_history[-1][1], mdp_process.state_history[-1][0], 'kD')
+A = wind_field.wind_field(field.vel, field.loc, length, field.nsamps, field.samples)
 
-mdp_process.reset_mdp()
-# Turn Left
-for i in range(1, test_steps):
-    # Fly level!
-    mdp_process.take_action([0, 0])
-    plt.plot(mdp_process.state_history[-1][1], mdp_process.state_history[-1][0], 'rD')
+#Create MDP object
+mdp = mdp.SoarerDrifterMDP(test_steps)
+mdp.xgoal = 26
+mdp.ygoal = 15
+mdp.balloon_dt = 1
 
-mdp_process.reset_mdp()
-# Turn Right
-for i in range(1, test_steps):
-    # Fly level!
-    mdp_process.take_action([2, 0])
-    plt.plot(mdp_process.state_history[-1][1], mdp_process.state_history[-1][0], 'bD')
+mdp.import_windfield(A) #import windfield
+mdp.import_actionspace([19,35], [0,5]) #import action space [xlimits], [ylimits]
 
-plt.show()
+
+state_log = []
+state = [5,2,1] #initialize state
+state_log.append(state)
+horizon = 5
+for i in range(10):
+    [a_opt,v_opt] = mdp.selectaction(state, horizon)
+    state = mdp.take_action(state, a_opt)
+    state_log.append(state)
+    #print(a_opt)
+    #print(v_opt)
+    #print(state)
+
+
+
+print(state_log)

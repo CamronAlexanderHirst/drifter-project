@@ -40,7 +40,8 @@ class wind_field:
         self.save_plot = False
 
         self.tend = 20
-        self.dt = 0.5
+        self.dt = 1
+        self.y_goal = 10
 
 
 
@@ -163,13 +164,15 @@ class wind_field:
 
     def prop_balloon(self, xstart, ystart):
         '''this method propagates a balloon through the vector field to determine the utility
-        of releasing the balloon at the starting point.
+        of releasing the balloon at the starting point. xstart and y start are the absolute
+        starting positions of the balloon
         '''
 
         import numpy as np
 
-        tend = self.tend
+
         dt = self.dt
+        tend = int((self.y_goal-ystart)) #to get constant y_end
         #Propogate samples:
         N = self.nsamps
         t_vect = np.arange(0,tend+dt,dt)
@@ -219,7 +222,7 @@ class wind_field:
         self.xmean_samps = np.mean(self.position_history_x_samps[:,-1])
         self.xmean_orig = np.mean(self.position_history_x_orig[-1])
 
-    def calc_util(self, xgoal, scale):
+    def calc_util(self):
         from scipy.stats import norm
 
         mu, std = norm.fit(self.position_history_x_samps[:,-1])

@@ -29,21 +29,22 @@ field.sample()
 
 A = wind_field.wind_field(field.vel, field.loc, length, field.nsamps, field.samples)
 
-print('x array:')
-print(field.loc[0,:,:])
-print('y array:')
-print(field.loc[1,:,:])
+#print('x array:')
+#print(field.loc[0,:,:])
+#print('y array:')
+#print(field.loc[1,:,:])
 
 
 
 A.dt = 0.5
 A.t_end = 20
+A.y_goal = 20
 
 dx = 1
 xstart = 20 #absolute starting point
-xend = 20 #abosulte end point
+xend = 22 #abosulte end point
 ystart = 2
-num_release_pts = 1
+num_release_pts = 3
 
 #generate start vector
 start = []
@@ -53,8 +54,8 @@ for i in np.linspace(0, xend-xstart, num_release_pts):
 
 print(start)
 for start in start:
-    A.prop_balloon(start[0], start[1], t_end, dt)
-    stats = A.calc_util(5,1)
+    A.prop_balloon(start[0], start[1])
+    stats = A.calc_util()
     print('Start: '+ str(start))
     print('Mu: ' + str(stats[0]))
     print('Std: ' + str(stats[1]))
@@ -87,7 +88,7 @@ vis = visualizer.animator()
 vis.save = True
 vis.init_live_plot(A)
 
-for time in range(int(t_end/dt)):
+for time in range(len(A.position_history_y_orig)):
     t.sleep(0.1)
     vis.measurement_update(A, time)
 
