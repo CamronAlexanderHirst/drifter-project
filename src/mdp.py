@@ -6,6 +6,7 @@ Author: John Jackson and Alex Hirst
 import numpy as np
 import math
 import matplotlib
+
 matplotlib.use('TkAgg')
 
 import matplotlib.pyplot as plt
@@ -42,6 +43,8 @@ class SoarerDrifterMDP:
         self.xgoal = None
         self.ygoal = None
         self.balloon_dt = None
+        self.initial_state = None
+        self.state_history = []
 
     def take_action(self, state, action):
 
@@ -67,8 +70,22 @@ class SoarerDrifterMDP:
         self.state_history.append(np.copy(x_new))
 
         return reward '''
+
         s = state
         A = action
+
+        if A:
+            if A[1] == 1: #if we release a balloon at the next step
+                B = self.field
+
+                self.x_release = s[0] + 1
+                self.y_release = s[1] + (-1*(A[0]-1))
+
+                B.prop_balloon(s[0] + 1 , s[1] + (-1*(A[0]-1)))
+
+                self.release_traj = [B.position_history_x_samps, B.position_history_y_samps,
+                B.position_history_x_orig, B.position_history_y_orig]
+
 
         return ([s[0] + 1 , s[1] + (-1*(A[0]-1)) , s[2] - A[1]])
 
@@ -117,7 +134,9 @@ class SoarerDrifterMDP:
         if suas_action == 2:
             suas_control_cost = .1
 
-        total_reward = balloon_reward + suas_control_cost
+        suas_position_cost = -0.1*s[1]
+
+        total_reward = balloon_reward + suas_control_cost + suas_position_cost
 
         return total_reward
 

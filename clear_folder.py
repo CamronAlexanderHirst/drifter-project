@@ -5,7 +5,7 @@ import os, shutil, sys
 
 #folder = '/path/to/folder'
 def clear_figure_folder():
-    folder =  './figures'
+    folder =  './figures' #Clear the figures folder (used to create gifs)
     for the_file in os.listdir(folder):
         file_path = os.path.join(folder, the_file)
         try:
