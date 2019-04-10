@@ -46,6 +46,8 @@ class SoarerDrifterMDP:
         self.initial_state = None
         self.state_history = []
 
+        self.balloon_reward_dict = {}
+
     def take_action(self, state, action):
 
         '''
@@ -111,19 +113,33 @@ class SoarerDrifterMDP:
     def calculate_reward(self, s, action):
 
         ''' Calculates rewards, really should work on tuning this in the future
+
+        OVERALL RUNTIME:
+        before implementing dict: 38.75 secs
+        after: 9 secs
         '''
         balloon_action = action[1]
         suas_action = action[0]
 
         if balloon_action > 0:
 
-            self.field.prop_balloon(s[0] + 1, s[1] + (-1*(action[0]-1)))
-            [mu,std] = self.field.calc_util()
-            balloon_reward = 100./abs(mu - self.xgoal) #- 1.*std
-            #TUNE HERE!!!
+            x = s[0] + 1
+            y = s[1] + (-1*(action[0]-1))
+            if (x,y) in self.balloon_reward_dict:
+                balloon_reward = self.balloon_reward_dict[(x,y)]
+
+            else:
+                self.field.prop_balloon(x, y)
+                [mu,std] = self.field.calc_util()
+                balloon_reward = 100./abs(mu - self.xgoal) #- 1.*std
+                #TUNE HERE!!!
+                self.balloon_reward_dict[(x,y)] = balloon_reward
 
         else:
             balloon_reward = 0.
+
+
+
 
         # Control action costs
         suas_control_cost = 0

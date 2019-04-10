@@ -41,7 +41,6 @@ mdp.import_windfield(A) #import windfield
 mdp.import_actionspace([0,42], [0,5]) #import action space [xlimits], [ylimits]
 
 
-state_log = []
 mdp.initial_state = [5,2,1] #initialize state
 mdp.state_history.append(mdp.initial_state)
 state = [5,2,1]
@@ -70,7 +69,3 @@ if gif == 'y':
 
 #Clear the figures folder
 clear_folder.clear_figure_folder()
-
-
-
-print(state_log)
