@@ -115,8 +115,9 @@ class SoarerDrifterMDP:
         ''' Calculates rewards, really should work on tuning this in the future
 
         OVERALL RUNTIME:
-        before implementing dict: 38.75 secs
-        after: 9 secs
+        before implementing dict: ~40 secs
+        after implementing dict: ~9 secs
+        of course, these results will vary with input
         '''
         balloon_action = action[1]
         suas_action = action[0]
@@ -131,7 +132,7 @@ class SoarerDrifterMDP:
             else:
                 self.field.prop_balloon(x, y)
                 [mu,std] = self.field.calc_util()
-                balloon_reward = 100./abs(mu - self.xgoal) #- 1.*std
+                balloon_reward = 100./abs(mu - self.xgoal) - 5.*std
                 #TUNE HERE!!!
                 self.balloon_reward_dict[(x,y)] = balloon_reward
 

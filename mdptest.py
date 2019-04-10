@@ -26,7 +26,7 @@ field = gen_random_field.field_generator(n ,m , length, 0, 0.15, n_samples, 'Nor
 field.nrm_mean = 0 #Can use matrix here to specify distributions for each measurement
 field.nrm_sig = 1 #Can use matrix here to specify distributions for each measurement
 field.sample()
-
+print('generated field')
 
 A = wind_field.wind_field(field.vel, field.loc, length, field.nsamps, field.samples)
 A.xgoal = 18
@@ -37,11 +37,13 @@ mdp = mdp.SoarerDrifterMDP(test_steps)
 mdp.xgoal = 18
 mdp.ygoal = 18
 mdp.balloon_dt = 0.5
+print('generated mdp')
 
 mdp.import_windfield(A) #import windfield
 mdp.import_actionspace([0,42], [0,5]) #import action space [xlimits], [ylimits]
+print('imported windfield and actionspace')
 
-
+print('running mdp simulation...')
 mdp.initial_state = [5,2,1] #initialize state
 mdp.state_history.append(mdp.initial_state)
 state = [4,3,1]
@@ -51,9 +53,11 @@ for i in range(30):
     state = mdp.take_action(state, a_opt)
     mdp.state_history.append(state)
 
+print('done')
 
 ''' Visualize Here!!!! '''
 
+print('visualizing...')
 vis = visualizer.animator_mdp()
 vis.save = True
 vis.init_live_plot(mdp)
