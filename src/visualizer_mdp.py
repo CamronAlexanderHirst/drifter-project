@@ -1,5 +1,6 @@
 '''
-Visualizer for Live Plot
+Visualizer for Live Plots and making gifs. Different classes for just visualization and
+visualizing the MDP
 Alex Hirst and John Jackson
 '''
 
@@ -23,7 +24,7 @@ class animator_mdp:
             self.state_history = mdp.state_history
 
             self.release_traj = mdp.release_traj
-            
+
             #find state where balloon is realeased
             i = 0
             for state in self.state_history:
