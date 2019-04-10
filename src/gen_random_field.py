@@ -1,5 +1,6 @@
-#function to generate a wind field
-
+'''function to generate a wind field
+Author: Alex Hirst
+'''
 class DistroNotRecognized(Exception):
     message = '\nException: DistroNotRecognizedError:\nDistribution not recognized\
      \nTry either Normal or Uniform '
@@ -17,18 +18,19 @@ class field_generator:
         #define all y-velocities as 1m/s
 
         Matrix[0,:,0] = init_x
-        #define all left hand side x-vels
+        #define all left hand side x-vels (rest are unifromly sampled)
 
         for i in range(0,n):
         #over y
             for j in range(1,m):
             #over x
+                #generated x - velocities
                 Matrix[0,i,j] = Matrix[0,i,j-1] + np.random.uniform(-1*dist,dist)
 
             for j in range(0,m):
                 location_Matrix[1,i,j] = i*length #matrix of y positions
                 location_Matrix[0,i,j] = j*length #matrix of x positions
-                
+
         self.vel = Matrix
         self.loc = location_Matrix
 
@@ -38,6 +40,7 @@ class field_generator:
         self.x_location = self.loc[0,:,:] #Matrix of x-locations
         self.y_location = self.loc[1,:,:]
 
+        #pick if we want a normal or uniformly distributed vector field
         if distro == 'Normal':
             self.distro = 'Normal'
         elif distro == 'Uniform':

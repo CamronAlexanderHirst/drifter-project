@@ -34,6 +34,15 @@ class wind_field:
         self.x_samples = samps[0]
         self.y_samples = samps[1]
 
+        self.matsizex = int(self.x_matrix.shape[1])
+        self.matsizey = int(self.x_matrix.shape[0])
+
+        self.save_plot = False
+
+        self.tend = 20
+        self.dt = 1
+        self.y_goal = 10
+
 
 
     def plot_wind_field(self):
@@ -46,14 +55,13 @@ class wind_field:
         xmat = self.x_matrix
         ymat = self.y_matrix
         length = self.length
-        self.matsizex = int(xmat.shape[1])
-        self.matsizey = int(xmat.shape[0])
+
 
         self.calc_mean()
 
         #Get x_traj and y_traj (MUST RUN prop_balloon FIRST)
 
-        plt.figure(figsize=(10,10))
+        self.fig = plt.figure(figsize=(10,10))
 
         plt.quiver(self.x_location, self.y_location, xmat,ymat)
 
@@ -64,7 +72,7 @@ class wind_field:
                 plt.plot(x_traj[i,:], y_traj[i,:])
 
         if self.plot_samps_mean:
-            plt.plot(self.xmean_samps,self.position_history_y_samps[0,-1],'ro', markersize=8)
+            plt.plot(self.xmean_samps,self.position_history_y_samps[0,-1],'ro', markersize=10)
 
         if self.plot_orig:
             x_traj = self.position_history_x_orig
@@ -79,15 +87,20 @@ class wind_field:
         plt.axis([self.x_location[0,0]-1, self.x_location[1,-1]+1, self.y_location[0,0]-1, self.y_location[-1,1]+1])
         plt.xticks(np.arange(0, length*(self.matsizex), length))
         plt.yticks(np.arange(0,length*(self.matsizey), length))
-        plt.xlabel('x coordinates (m)')
-        plt.ylabel('y coordiantes (m)')
+        plt.xlabel('X')
+        plt.ylabel('Y')
 
         plt.grid(True ,which = 'major', axis = 'both')
 
         #Show plot
         #TODO: How to make this run in background?
         plt.draw()
+        if self.save_plot == True:
+            print('saved fig')
+            plt.savefig('./outputs/plot.png')
         plt.show(block=False)
+
+
 
 
     def get_wind(self, x, y, n, which):
@@ -149,13 +162,17 @@ class wind_field:
 
         return [x_value, y_value]
 
-    def prop_balloon(self, xstart, ystart, tend, dt):
+    def prop_balloon(self, xstart, ystart):
         '''this method propagates a balloon through the vector field to determine the utility
-        of releasing the balloon at the starting point.
+        of releasing the balloon at the starting point. xstart and y start are the absolute
+        starting positions of the balloon
         '''
 
         import numpy as np
 
+
+        dt = self.dt
+        tend = int((self.y_goal-ystart)) #to get constant y_end
         #Propogate samples:
         N = self.nsamps
         t_vect = np.arange(0,tend+dt,dt)
@@ -205,7 +222,7 @@ class wind_field:
         self.xmean_samps = np.mean(self.position_history_x_samps[:,-1])
         self.xmean_orig = np.mean(self.position_history_x_orig[-1])
 
-    def calc_util(self, xgoal, scale):
+    def calc_util(self):
         from scipy.stats import norm
 
         mu, std = norm.fit(self.position_history_x_samps[:,-1])
