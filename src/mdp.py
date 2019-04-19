@@ -27,9 +27,9 @@ class SoarerDrifterMDP:
                               [0, 1], [1, 1], [2, 1]]
 
         # TODO: Chosen probabilities are arbitrary.
-        self.transition_probability = np.array([[0.75, 0.125, 0.125],
-                                                [0.125, 0.75, 0.125],
-                                                [0.125, 0.125, 0.75]])
+        self.transition_probability = np.array([[0.80, 0.15, 0.05],
+                                                [0.10, 0.80, 0.10],
+                                                [0.05, 0.15, 0.80]])
 
         # sUAS Parameters
         self.x0 = np.array([5, 0])  # Starting cell of the sUAS
@@ -75,6 +75,17 @@ class SoarerDrifterMDP:
 
         s = state
         A = action
+
+        actionsprobs = self.transition_probability[A[0]]
+        #determine action
+        randn = np.random.uniform()
+        if randn <= actionsprobs[0]:
+            A[0] = 0
+        elif randn <= actionsprobs[1]:
+            A[0] = 1
+        else:
+            A[0] = 2
+
 
         if A:
             if A[1] == 1: #if we release a balloon at the next step
@@ -145,13 +156,13 @@ class SoarerDrifterMDP:
         # Control action costs
         suas_control_cost = 0
         if suas_action == 0:
-            suas_control_cost = -.1
+            suas_control_cost = 0.
         if suas_action == 1:
             suas_control_cost = 0.
         if suas_action == 2:
-            suas_control_cost = .1
+            suas_control_cost = 0.
 
-        suas_position_cost = -0.1*s[1]
+        suas_position_cost = -0.01*s[1]
 
         total_reward = balloon_reward + suas_control_cost + suas_position_cost
 
@@ -208,13 +219,17 @@ class SoarerDrifterMDP:
 
     def getstatespace(self, s, A):
 
-        S_s = []
-        S_s.append([s[0] + 1 , s[1] + (-1*(A[0]-1)) , s[2] - A[1]])
+        #set of possible actions: go up, go straight, go down
+        S_s = [[s[0]+1,s[1]+1,s[2]-A[1]], [s[0]+1,s[1],s[2]-A[1]], [s[0]+1,s[1]-1,s[2]-A[1]]]
+        #S_s.append([s[0] + 1 , s[1] + (-1*(A[0]-1)) , s[2] - A[1]])
 
-        return S_s
+        T_s = self.transition_probability[A[0]]
+
+
+        return S_s, T_s
 
     def selectaction(self, s, d):
-        gamma = 1 #tuning parameter
+        gamma = 0.95 #tuning parameter
 
         if d == 0:
             return (None,0)
@@ -229,14 +244,17 @@ class SoarerDrifterMDP:
         for a in A_s: #for every action in action space
             v = self.calculate_reward(s,a) #get reward of doing action a at state s
             #forget about transition prob. for now
-            S_s = self.getstatespace(s, a) #get the space of states from doing action a at state s
+            S_s, T_s = self.getstatespace(s, a) #get the space of states from doing action a at state s
             #print(S_s)
             #print(a)
+            count  = 0
             for sp in S_s: #for every potential resulting state in state s
                 #print(a)
                 #print(sp)
                 [ap, vp] = self.selectaction(sp, d-1)
-                v = v + gamma*vp
+                tp = T_s[count]
+                v = v + gamma*vp*tp
+                count = count + 1
 
             if v > v_opt:
                 a_opt = a
