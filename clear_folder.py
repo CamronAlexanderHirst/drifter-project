@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+'''Clears folder used to store output images used to make gifs
+Author:Alex Hirst
+'''
 import os, shutil, sys
 
 

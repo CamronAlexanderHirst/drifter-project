@@ -47,7 +47,7 @@ print('running mdp simulation...')
 mdp.initial_state = [5,2,1] #initialize state
 mdp.state_history.append(mdp.initial_state)
 state = [4,3,1]
-horizon = 4
+horizon = 5
 for i in range(30):
     [a_opt,v_opt] = mdp.selectaction(state, horizon)
     state = mdp.take_action(state, a_opt)
