@@ -98,6 +98,7 @@ class SoarerDrifterMDP:
                 B.position_history_x_orig, B.position_history_y_orig]
                 self.num_releases += 1
 
+
         return ([s[0] + 1 , s[1] + (-1*(A[0]-1)) , s[2] - A[1]])
 
 
