@@ -40,13 +40,21 @@ class SoarerDrifterMDP:
         self.current_state = [self.x0, 1] #initialize location, num. balloons
         self.planning_horizon = None
 
-        self.xgoal = None
+        self.xgoals = None
+        self.num_balloons = None
+        self.num_releases = 0
         self.ygoal = None
         self.balloon_dt = None
         self.initial_state = None
         self.state_history = []
+        self.release_traj = {}
 
         self.balloon_reward_dict = {}
+
+    def set_xgoals(self, xgoal_list):
+
+        self.xgoals = xgoal_list
+        self.num_balloons = len(xgoal_list)
 
     def take_action(self, state, action):
 
@@ -78,6 +86,7 @@ class SoarerDrifterMDP:
 
         if A:
             if A[1] == 1: #if we release a balloon at the next step
+
                 B = self.field
 
                 self.x_release = s[0] + 1
@@ -85,9 +94,9 @@ class SoarerDrifterMDP:
 
                 B.prop_balloon(s[0] + 1 , s[1] + (-1*(A[0]-1)))
 
-                self.release_traj = [B.position_history_x_samps, B.position_history_y_samps,
+                self.release_traj[self.num_releases] = [B.position_history_x_samps, B.position_history_y_samps,
                 B.position_history_x_orig, B.position_history_y_orig]
-
+                self.num_releases += 1
 
         return ([s[0] + 1 , s[1] + (-1*(A[0]-1)) , s[2] - A[1]])
 
@@ -126,15 +135,19 @@ class SoarerDrifterMDP:
 
             x = s[0] + 1
             y = s[1] + (-1*(action[0]-1))
-            if (x,y) in self.balloon_reward_dict:
-                balloon_reward = self.balloon_reward_dict[(x,y)]
+            bal = s[2]
+            if (x, y, bal) in self.balloon_reward_dict:
+                balloon_reward = self.balloon_reward_dict[(x, y, bal)]
 
             else:
                 self.field.prop_balloon(x, y)
                 [mu,std] = self.field.calc_util()
-                balloon_reward = 100./abs(mu - self.xgoal) - 5.*std
+                goal_index = self.num_balloons - s[2]
+
+                balloon_reward = 100./abs(mu - self.xgoals[goal_index]) - 5.*std
+
                 #TUNE HERE!!!
-                self.balloon_reward_dict[(x,y)] = balloon_reward
+                self.balloon_reward_dict[(x, y, bal)] = balloon_reward
 
         else:
             balloon_reward = 0.
@@ -227,7 +240,7 @@ class SoarerDrifterMDP:
         #print(A_s)
 
         for a in A_s: #for every action in action space
-            v = self.calculate_reward(s,a) #get reward of doing action a at state s
+            v = self.calculate_reward(s, a) #get reward of doing action a at state s
             #forget about transition prob. for now
             S_s = self.getstatespace(s, a) #get the space of states from doing action a at state s
             #print(S_s)

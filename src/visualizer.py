@@ -4,6 +4,8 @@ Alex Hirst and John Jackson
 '''
 
 import matplotlib
+matplotlib.use('TkAgg') #for macs
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -106,21 +108,27 @@ class animator_mdp:
     def init_live_plot(self, mdp):
 
             self.wind_field = mdp.field
+            self.num_ballons = mdp.num_balloons
             wind_field = self.wind_field
 
             self.state_history = mdp.state_history
-
             self.release_traj = mdp.release_traj
 
             #find state where balloon is realeased
             i = 0
+            old_state = self.state_history[0][2]
+            self.release_times = {}
             for state in self.state_history:
-                if state[2] == 0:
-                    break
+                if state[2] == (old_state - 1):
+                    self.release_times[self.num_ballons - old_state] = i
+                    old_state = state[2]
+                    if state[2] == 0:
+                        break
                 i = i + 1
 
-            self.release_time = i
-            self.total_time = self.release_time + len(wind_field.position_history_y_orig) + 1
+            # self.release_time = i
+            # i is used for the total time
+            self.total_time = i + len(wind_field.position_history_y_orig) + 1
             y_release = self.state_history[i][1]
             #self.wind_field.position_history_y_samps = y_release + self.wind_field.position_history_y_samps
             #Initialize live plot
@@ -130,7 +138,8 @@ class animator_mdp:
             self.ax = self.fig.add_subplot(111) #create a subplot
 
             # Starting point is plotted as a diamond
-            self.ax.plot(mdp.xgoal, mdp.ygoal, 'rD', markersize = 10)
+            for xgoal in mdp.xgoals:
+                self.ax.plot(xgoal, mdp.ygoal, 'rD', markersize = 10)
 
             #plot vector field
             xmat = wind_field.x_matrix
@@ -156,9 +165,15 @@ class animator_mdp:
 
             num_agents = wind_field.nsamps
 
-            for i in range(num_agents):
-                line, = self.ax.plot([], [])
-                self.line_list.append(line)
+            self.line_dict = {}
+
+            for release_num in self.release_times:
+                self.line_dict[release_num] = []
+
+            for release_num in self.release_times:
+                for i in range(num_agents):
+                    line, = self.ax.plot([], [])
+                    self.line_dict[release_num].append(line)
 
             self.state_list = self.ax.plot([],[], 'bo', markersize=8)
 
@@ -170,11 +185,9 @@ class animator_mdp:
     def measurement_update(self, time):
             # This updates all agents at a time
             wind_field = self.wind_field
-            release_time = self.release_time
+            release_times = self.release_times
             state_history = self.state_history
 
-            posx = self.release_traj[0]
-            posy = self.release_traj[1]
             nsamps = wind_field.nsamps
 
             x = []
@@ -183,15 +196,21 @@ class animator_mdp:
                 x.append(state[0])
                 y.append(state[1])
 
-            self.state_list[0].set_data(x,y)
+            self.state_list[0].set_data(x, y)
 
-            if time > release_time:
-                time2 = time - release_time
-                for j in range(nsamps):
-                    if time <= self.trail_length:
-                        self.line_list[j].set_data(posx[j,0:time2], posy[j,0:time2])
-                    else:
-                        self.line_list[j].set_data(posx[j,0:time2][-self.trail_length:], posy[j,0:time2][-self.trail_length:])
+            for release_num in release_times:
+                release_time = release_times[release_num]
+
+                posx = self.release_traj[release_num][0]
+                posy = self.release_traj[release_num][1]
+
+                if time > release_time:
+                    time2 = time - release_time
+                    for j in range(nsamps):
+                        if time <= self.trail_length:
+                            self.line_dict[release_num][j].set_data(posx[j, 0:time2], posy[j,0:time2])
+                        else:
+                            self.line_dict[release_num][j].set_data(posx[j, 0:time2][-self.trail_length:], posy[j,0:time2][-self.trail_length:])
 
             self.fig.canvas.draw()
             self.fig.canvas.flush_events()
