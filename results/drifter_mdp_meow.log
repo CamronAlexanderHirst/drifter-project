@@ -1,0 +1,11 @@
+generated field
+X Goals: [11, 16, 25]
+Y Goals: 18
+Balloon dt: 0.5
+generated mdp
+imported windfield and actionspace
+running mdp simulation...
+Horizon: 5
+Generation and MDP Simulation Completed in 70.472634 s
+Saving the MDP for this experiment.
+Successfully saved the MPD.
