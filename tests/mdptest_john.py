@@ -3,11 +3,10 @@ Test Script for the MDP
 """
 
 import matplotlib
-matplotlib.use('TkAgg')
-
 import matplotlib.pyplot as plt
 
 from src import mdp
+matplotlib.use('TkAgg')
 
 
 test_steps = 100

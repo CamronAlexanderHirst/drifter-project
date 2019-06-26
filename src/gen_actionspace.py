@@ -3,7 +3,8 @@ Reward Calculator Class for use in MDP
 Author: Alex Hirst
 '''
 
-def generator(xlimits,ylimits):
+
+def generator(xlimits, ylimits):
     xmin = xlimits[0]
     xmax = xlimits[1]
 
@@ -14,7 +15,7 @@ def generator(xlimits,ylimits):
 
     for x in range(xmax - xmin + 1):
         for y in range(ymax - ymin + 1):
-            for b in range(0,2): #number of balloons
-                actionspace.append([xmin + x,ymin + y, b])
+            for b in range(0, 2):  # number of balloons
+                actionspace.append([xmin + x, ymin + y, b])
 
     return actionspace
