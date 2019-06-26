@@ -4,234 +4,233 @@ Alex Hirst and John Jackson
 '''
 
 import matplotlib
-matplotlib.use('TkAgg') #for macs
-
 import matplotlib.pyplot as plt
 import numpy as np
+
+matplotlib.use('TkAgg')  # for macs
+
 
 class animator:
 
     def __init__(self):
 
-            self.line_list = [] #create a line list
-            self.trail_length = 500
-            self.save = False
+        self.line_list = []  # create a line list
+        self.trail_length = 500
+        self.save = False
 
     def init_live_plot(self, wind_field):
 
-            #Initialize live plot
+        # Initialize live plot
 
-            self.fig = plt.figure(figsize=(10,10))
+        self.fig = plt.figure(figsize=(10, 10))
 
-            self.ax = self.fig.add_subplot(111) #create a subplot
+        self.ax = self.fig.add_subplot(111)  # create a subplot
 
-            # Starting point is plotted as a diamond
-            self.ax.plot(wind_field.position_history_x_orig[0], wind_field.position_history_y_orig[0], 'bD')
+        # Starting point is plotted as a diamond
+        self.ax.plot(wind_field.position_history_x_orig[0], wind_field.position_history_y_orig[0], 'bD')
 
-            #plot vector field
-            xmat = wind_field.x_matrix
-            ymat = wind_field.y_matrix
-            plt.quiver(wind_field.x_location, wind_field.y_location, xmat,ymat)
+        # plot vector field
+        xmat = wind_field.x_matrix
+        ymat = wind_field.y_matrix
+        plt.quiver(wind_field.x_location, wind_field.y_location, xmat, ymat)
 
-            length = wind_field.length
-            x_lim_min = wind_field.x_location[0,0]-1
-            y_lim_min = wind_field.y_location[0,0]-1
+        length = wind_field.length
+        x_lim_min = wind_field.x_location[0, 0]-1
+        y_lim_min = wind_field.y_location[0, 0]-1
 
-            x_lim_max = wind_field.x_location[1,-1]+1
-            y_lim_max = wind_field.y_location[-1,0]+1
+        x_lim_max = wind_field.x_location[1, -1]+1
+        y_lim_max = wind_field.y_location[-1, 0]+1
 
-            plt.xticks(np.arange(0, length*(wind_field.matsizex), length))
-            plt.yticks(np.arange(0,length*(wind_field.matsizey), length))
+        plt.xticks(np.arange(0, length*(wind_field.matsizex), length))
+        plt.yticks(np.arange(0, length*(wind_field.matsizey), length))
 
-            plt.xlim([x_lim_min, x_lim_max])
-            plt.ylim([y_lim_min, y_lim_max])
+        plt.xlim([x_lim_min, x_lim_max])
+        plt.ylim([y_lim_min, y_lim_max])
 
-            plt.xlabel('X')
-            plt.ylabel('Y')
-            plt.grid()
+        plt.xlabel('X')
+        plt.ylabel('Y')
+        plt.grid()
 
-            num_agents = wind_field.nsamps
+        num_agents = wind_field.nsamps
 
-            for i in range(num_agents):
-                line, = self.ax.plot([], [])
-                self.line_list.append(line)
+        for i in range(num_agents):
+            line, = self.ax.plot([], [])
+            self.line_list.append(line)
 
-            plt.show(block=False)
-            plt.tight_layout()
-
-
+        plt.show(block=False)
+        plt.tight_layout()
 
     def measurement_update(self, wind_field, time):
-            # This updates all agents at a time
-            posx = wind_field.position_history_x_samps
-            posy = wind_field.position_history_y_samps
-            nsamps = wind_field.nsamps
+        # This updates all agents at a time
+        posx = wind_field.position_history_x_samps
+        posy = wind_field.position_history_y_samps
+        nsamps = wind_field.nsamps
 
-            for j in range(nsamps):
-                if time <= self.trail_length:
-                    self.line_list[j].set_data(posx[j,0:time], posy[j,0:time])
-                else:
-                    self.line_list[j].set_data(posx[j,0:time][-self.trail_length:], posy[j,0:time][-self.trail_length:])
+        for j in range(nsamps):
+            if time <= self.trail_length:
+                self.line_list[j].set_data(posx[j, 0:time], posy[j, 0:time])
+            else:
+                self.line_list[j].set_data(posx[j, 0:time][-self.trail_length:], posy[j, 0:time][-self.trail_length:])
 
-            self.fig.canvas.draw()
-            self.fig.canvas.flush_events()
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
 
-            self.timesteps = time
+        self.timesteps = time
 
-            if self.save == True:
-                plt.savefig('./figures/'+str(time)+'.png')
+        if self.save is True:
+            plt.savefig('./figures/'+str(time)+'.png')
 
     def make_gif(self):
 
-            print('making gif...')
-            import imageio
-            images = []
+        print('making gif...')
+        import imageio
+        images = []
 
-            filenames = []
-            for i in range(self.timesteps+1):
-                filenames.append('./figures/'+str(i)+'.png')
+        filenames = []
+        for i in range(self.timesteps+1):
+            filenames.append('./figures/'+str(i)+'.png')
 
-            for filename in filenames:
-                images.append(imageio.imread(filename))
-            imageio.mimsave('./outputs/movie.gif', images, duration=0.2)
+        for filename in filenames:
+            images.append(imageio.imread(filename))
+        imageio.mimsave('./outputs/movie.gif', images, duration=0.2)
 
-            print('done')
+        print('done')
+
 
 class animator_mdp:
 
     def __init__(self):
 
-            self.line_list = [] #create a line list
-            self.trail_length = 500
-            self.save = False
+        self.line_list = []  # create a line list
+        self.trail_length = 500
+        self.save = False
 
     def init_live_plot(self, mdp):
 
-            self.wind_field = mdp.field
-            self.num_ballons = mdp.num_balloons
-            wind_field = self.wind_field
+        self.wind_field = mdp.field
+        self.num_ballons = mdp.num_balloons
+        wind_field = self.wind_field
 
-            self.state_history = mdp.state_history
-            self.release_traj = mdp.release_traj
+        self.state_history = mdp.state_history
+        self.release_traj = mdp.release_traj
 
-            #find state where balloon is realeased
-            i = 0
-            old_state = self.state_history[0][2]
-            self.release_times = {}
-            for state in self.state_history:
-                if state[2] == (old_state - 1):
-                    self.release_times[self.num_ballons - old_state] = i
-                    old_state = state[2]
-                    if state[2] == 0:
-                        break
-                i = i + 1
+        # find state where balloon is realeased
+        i = 0
+        old_state = self.state_history[0][2]
+        self.release_times = {}
+        for state in self.state_history:
+            if state[2] == (old_state - 1):
+                self.release_times[self.num_ballons - old_state] = i
+                old_state = state[2]
+                if state[2] == 0:
+                    break
+            i = i + 1
 
-            # self.release_time = i
-            # i is used for the total time
-            self.total_time = i + len(wind_field.position_history_y_orig) + 1
-            y_release = self.state_history[i][1]
-            #self.wind_field.position_history_y_samps = y_release + self.wind_field.position_history_y_samps
-            #Initialize live plot
+        # self.release_time = i
+        # i is used for the total time
+        self.total_time = i + len(wind_field.position_history_y_orig) + 1
 
-            self.fig = plt.figure(figsize=(10,10))
+        # y_release = self.state_history[i][1]
+        # self.wind_field.position_history_y_samps = y_release + self.wind_field.position_history_y_samps
+        # Initialize live plot
 
-            self.ax = self.fig.add_subplot(111) #create a subplot
+        self.fig = plt.figure(figsize=(10, 10))
 
-            # Starting point is plotted as a diamond
-            for xgoal in mdp.xgoals:
-                self.ax.plot(xgoal, mdp.ygoal, 'rD', markersize = 10)
+        self.ax = self.fig.add_subplot(111)  # create a subplot
 
-            #plot vector field
-            xmat = wind_field.x_matrix
-            ymat = wind_field.y_matrix
-            plt.quiver(wind_field.x_location, wind_field.y_location, xmat,ymat)
+        # Starting point is plotted as a diamond
+        for xgoal in mdp.xgoals:
+            self.ax.plot(xgoal, mdp.ygoal, 'rD', markersize=10)
 
-            length = wind_field.length
-            x_lim_min = wind_field.x_location[0,0]-1
-            y_lim_min = wind_field.y_location[0,0]-1
+        # plot vector field
+        xmat = wind_field.x_matrix
+        ymat = wind_field.y_matrix
+        plt.quiver(wind_field.x_location, wind_field.y_location, xmat, ymat)
 
-            x_lim_max = wind_field.x_location[1,-1]+1
-            y_lim_max = wind_field.y_location[-1,0]+1
+        length = wind_field.length
+        x_lim_min = wind_field.x_location[0, 0]-1
+        y_lim_min = wind_field.y_location[0, 0]-1
 
-            plt.xticks(np.arange(0, length*(wind_field.matsizex), length))
-            plt.yticks(np.arange(0,length*(wind_field.matsizey), length))
+        x_lim_max = wind_field.x_location[1, -1]+1
+        y_lim_max = wind_field.y_location[-1, 0]+1
 
-            plt.xlim([x_lim_min, x_lim_max])
-            plt.ylim([y_lim_min, y_lim_max])
+        plt.xticks(np.arange(0, length*(wind_field.matsizex), length))
+        plt.yticks(np.arange(0, length*(wind_field.matsizey), length))
 
-            plt.xlabel('X')
-            plt.ylabel('Y')
-            plt.grid()
+        plt.xlim([x_lim_min, x_lim_max])
+        plt.ylim([y_lim_min, y_lim_max])
 
-            num_agents = wind_field.nsamps
+        plt.xlabel('X')
+        plt.ylabel('Y')
+        plt.grid()
 
-            self.line_dict = {}
+        num_agents = wind_field.nsamps
 
-            for release_num in self.release_times:
-                self.line_dict[release_num] = []
+        self.line_dict = {}
 
-            for release_num in self.release_times:
-                for i in range(num_agents):
-                    line, = self.ax.plot([], [])
-                    self.line_dict[release_num].append(line)
+        for release_num in self.release_times:
+            self.line_dict[release_num] = []
 
-            self.state_list = self.ax.plot([],[], 'bo', markersize=8)
+        for release_num in self.release_times:
+            for i in range(num_agents):
+                line, = self.ax.plot([], [])
+                self.line_dict[release_num].append(line)
 
-            plt.show(block=False)
-            plt.tight_layout()
+        self.state_list = self.ax.plot([], [], 'bo', markersize=8)
 
-
+        plt.show(block=False)
+        plt.tight_layout()
 
     def measurement_update(self, time):
-            # This updates all agents at a time
-            wind_field = self.wind_field
-            release_times = self.release_times
-            state_history = self.state_history
+        # This updates all agents at a time
+        wind_field = self.wind_field
+        release_times = self.release_times
+        state_history = self.state_history
 
-            nsamps = wind_field.nsamps
+        nsamps = wind_field.nsamps
 
-            x = []
-            y = []
-            for state in state_history[0:min([time,len(state_history)])]:
-                x.append(state[0])
-                y.append(state[1])
+        x = []
+        y = []
+        for state in state_history[0:min([time, len(state_history)])]:
+            x.append(state[0])
+            y.append(state[1])
 
-            self.state_list[0].set_data(x, y)
+        self.state_list[0].set_data(x, y)
 
-            for release_num in release_times:
-                release_time = release_times[release_num]
+        for release_num in release_times:
+            release_time = release_times[release_num]
 
-                posx = self.release_traj[release_num][0]
-                posy = self.release_traj[release_num][1]
+            posx = self.release_traj[release_num][0]
+            posy = self.release_traj[release_num][1]
 
-                if time > release_time:
-                    time2 = time - release_time
-                    for j in range(nsamps):
-                        if time <= self.trail_length:
-                            self.line_dict[release_num][j].set_data(posx[j, 0:time2], posy[j,0:time2])
-                        else:
-                            self.line_dict[release_num][j].set_data(posx[j, 0:time2][-self.trail_length:], posy[j,0:time2][-self.trail_length:])
+            if time > release_time:
+                time2 = time - release_time
+                for j in range(nsamps):
+                    if time <= self.trail_length:
+                        self.line_dict[release_num][j].set_data(posx[j, 0:time2], posy[j, 0:time2])
+                    else:
+                        self.line_dict[release_num][j].set_data(posx[j, 0:time2][-self.trail_length:], posy[j, 0:time2][-self.trail_length:])
 
-            self.fig.canvas.draw()
-            self.fig.canvas.flush_events()
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
 
-            self.timesteps = time
+        self.timesteps = time
 
-            if self.save == True:
-                plt.savefig('./figures/'+str(time)+'.png')
+        if self.save is True:
+            plt.savefig('./figures/'+str(time)+'.png')
 
     def make_gif(self):
 
-            print('making gif...')
-            import imageio
-            images = []
+        print('making gif...')
+        import imageio
+        images = []
 
-            filenames = []
-            for i in range(self.timesteps+1):
-                filenames.append('./figures/'+str(i)+'.png')
+        filenames = []
+        for i in range(self.timesteps+1):
+            filenames.append('./figures/'+str(i)+'.png')
 
-            for filename in filenames:
-                images.append(imageio.imread(filename))
-            imageio.mimsave('./outputs/movie.gif', images, duration=0.15)
+        for filename in filenames:
+            images.append(imageio.imread(filename))
+        imageio.mimsave('./outputs/movie.gif', images, duration=0.15)
 
-            print('done')
+        print('done')

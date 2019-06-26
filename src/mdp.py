@@ -9,8 +9,6 @@ import matplotlib
 
 matplotlib.use('TkAgg')
 
-import matplotlib.pyplot as plt
-
 
 class SoarerDrifterMDP:
 
@@ -36,8 +34,7 @@ class SoarerDrifterMDP:
         self.x_old = self.x0
         self.state_history = [np.copy(self.x0)]
 
-
-        self.current_state = [self.x0, 1] #initialize location, num. balloons
+        self.current_state = [self.x0, 1]  # initialize location, num. balloons
         self.planning_horizon = None
 
         self.xgoals = None
@@ -57,7 +54,6 @@ class SoarerDrifterMDP:
         self.num_balloons = len(xgoal_list)
 
     def take_action(self, state, action):
-
         '''
         suas_action = action[0]
 
@@ -85,22 +81,21 @@ class SoarerDrifterMDP:
         A = action
 
         if A:
-            if A[1] == 1: #if we release a balloon at the next step
+            if A[1] == 1:  # if we release a balloon at the next step
 
                 B = self.field
 
                 self.x_release = s[0] + 1
                 self.y_release = s[1] + (-1*(A[0]-1))
 
-                B.prop_balloon(s[0] + 1 , s[1] + (-1*(A[0]-1)))
+                B.prop_balloon(s[0] + 1, s[1] + (-1*(A[0]-1)))
 
-                self.release_traj[self.num_releases] = [B.position_history_x_samps, B.position_history_y_samps,
-                B.position_history_x_orig, B.position_history_y_orig]
+                self.release_traj[self.num_releases] = [B.position_history_x_samps,
+                                                        B.position_history_y_samps,
+                                                        B.position_history_x_orig, B.position_history_y_orig]
                 self.num_releases += 1
 
-
-        return ([s[0] + 1 , s[1] + (-1*(A[0]-1)) , s[2] - A[1]])
-
+        return ([s[0] + 1, s[1] + (-1*(A[0]-1)), s[2] - A[1]])
 
     def suas_control(self, transition_row):
 
@@ -121,14 +116,13 @@ class SoarerDrifterMDP:
         return x_new
 
     def calculate_reward(self, s, action):
-
         ''' Calculates rewards, really should work on tuning this in the future
-
         OVERALL RUNTIME:
         before implementing dict: ~40 secs
         after implementing dict: ~9 secs
         of course, these results will vary with input
         '''
+
         balloon_action = action[1]
         suas_action = action[0]
 
@@ -142,19 +136,16 @@ class SoarerDrifterMDP:
 
             else:
                 self.field.prop_balloon(x, y)
-                [mu,std] = self.field.calc_util()
+                [mu, std] = self.field.calc_util()
                 goal_index = self.num_balloons - s[2]
 
                 balloon_reward = 100./abs(mu - self.xgoals[goal_index]) - 5.*std
 
-                #TUNE HERE!!!
+                # TUNE HERE!!!
                 self.balloon_reward_dict[(x, y, bal)] = balloon_reward
 
         else:
             balloon_reward = 0.
-
-
-
 
         # Control action costs
         suas_control_cost = 0
@@ -171,49 +162,46 @@ class SoarerDrifterMDP:
 
         return total_reward
 
-
     def reset_mdp(self):
         self.x_old = self.x0
         self.state_history = [np.copy(self.x0)]
 
     def import_windfield(self, field):
         self.field = field
-        self.field.dt = self.balloon_dt #set balloon propagation timestep length
-        self.field.y_goal = self.ygoal #set balloon propagation ygoal
+        self.field.dt = self.balloon_dt  # set balloon propagation timestep length
+        self.field.y_goal = self.ygoal  # set balloon propagation ygoal
 
-    def import_actionspace(self,x,y):
-        #self.actionspace = actionspace future use
+    def import_actionspace(self, x, y):
+        # self.actionspace = actionspace future use
         self.xmin = x[0]
         self.xmax = x[1]
 
         self.ymin = y[0]
         self.ymax = y[1]
 
-
     def getactionspace(self, s):
-        A_s = [] #empty list of actions
+        A_s = []  # empty list of actions
 
-        brange = [0,1]
-        yrange = [0,1,2]
+        brange = [0, 1]
+        yrange = [0, 1, 2]
 
-        #How to define action set?
-        if s[2] <= 0 :
+        # How to define action set?
+        if s[2] <= 0:
             brange = [0]
 
         if s[1] == self.ymax:
-            yrange = [1,2]
+            yrange = [1, 2]
         if s[1] > self.ymax:
             yrange = [2]
 
         if s[1] == self.ymin:
-            yrange = [0,1]
+            yrange = [0, 1]
         if s[1] < self.ymin:
             yrange = [0]
 
         for y in yrange:
             for b in brange:
-                A_s.append([y,b])
-
+                A_s.append([y, b])
 
         if s[0] >= self.xmax:
             A_s = []
@@ -223,32 +211,31 @@ class SoarerDrifterMDP:
     def getstatespace(self, s, A):
 
         S_s = []
-        S_s.append([s[0] + 1 , s[1] + (-1*(A[0]-1)) , s[2] - A[1]])
+        S_s.append([s[0] + 1, s[1] + (-1*(A[0]-1)), s[2] - A[1]])
 
         return S_s
 
     def selectaction(self, s, d):
-        gamma = 1 #tuning parameter
+        gamma = 1  # tuning parameter
 
         if d == 0:
-            return (None,0)
+            return (None, 0)
 
         a_opt = None
-        v_opt = -math.inf #initialize optimal a and v
+        v_opt = -math.inf  # initialize optimal a and v
 
+        A_s = self.getactionspace(s)  # get action space for state s
+        # print(A_s)
 
-        A_s = self.getactionspace(s) #get action space for state s
-        #print(A_s)
-
-        for a in A_s: #for every action in action space
-            v = self.calculate_reward(s, a) #get reward of doing action a at state s
-            #forget about transition prob. for now
-            S_s = self.getstatespace(s, a) #get the space of states from doing action a at state s
-            #print(S_s)
-            #print(a)
-            for sp in S_s: #for every potential resulting state in state s
-                #print(a)
-                #print(sp)
+        for a in A_s:  # for every action in action space
+            v = self.calculate_reward(s, a)  # get reward of doing action a at state s
+            # forget about transition prob. for now
+            S_s = self.getstatespace(s, a)  # get the space of states from doing action a at state s
+            # print(S_s)
+            # print(a)
+            for sp in S_s:  # for every potential resulting state in state s
+                # print(a)
+                # print(sp)
                 [ap, vp] = self.selectaction(sp, d-1)
                 v = v + gamma*vp
 
@@ -256,4 +243,4 @@ class SoarerDrifterMDP:
                 a_opt = a
                 v_opt = v
 
-        return [a_opt,v_opt]
+        return [a_opt, v_opt]

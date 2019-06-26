@@ -3,5 +3,5 @@
 *.jpg
 *.gif
 __pycache__/
-
+*.log
 
