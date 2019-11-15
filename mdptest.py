@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 """
 Test Script for the MDP
 Alex Hirst
@@ -12,11 +13,11 @@ import matplotlib
 import clear_folder
 import time as t
 
-matplotlib.use('TkAgg')  # for macs
+#matplotlib.use('TkAgg')  # for macs
 
 logFormatter = logging.Formatter('%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s')
 logger = logging.Logger(logFormatter)
-hdlr = logging.FileHandler(datetime.datetime.now().strftime('drifter_mdp_%H_%M_%d_%m_%Y.log'))
+hdlr = logging.FileHandler(datetime.datetime.now().strftime('logs/drifter_mdp_%H_%M_%d_%m_%Y.log'))
 logger.addHandler(hdlr)
 
 consoleHandler = logging.StreamHandler()
@@ -26,8 +27,8 @@ logger.addHandler(consoleHandler)
 logger.setLevel(logging.INFO)
 test_steps = 100
 n = 10  # cell height of field (y)
-m = 15  # cell width of field (x)
-length = 3  # unit width
+m = 18  # cell width of field (x)
+length = 3  # cell unit width
 n_samples = 75  # number of balloons propagated at each space
 
 
@@ -61,10 +62,11 @@ logger.info('running mdp simulation...')
 mdp.initial_state = [5, 2, mdp.num_balloons]  # initialize state
 mdp.state_history.append(mdp.initial_state)
 state = mdp.initial_state
-horizon = 5
+horizon = 7
 logger.info('Horizon: {}'.format(horizon))
 for i in range(30):
     [a_opt, v_opt] = mdp.selectaction(state, horizon)
+    #[a_opt, v_opt] = mdp.selectaction_SPARCE(state, horizon)
     state = mdp.take_action(state, a_opt)
     mdp.state_history.append(state)
 
