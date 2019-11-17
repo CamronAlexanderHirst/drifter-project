@@ -23,9 +23,9 @@ class SoarerDrifterMDP:
                               [0, 1], [1, 1], [2, 1]]
 
         # TODO: Chosen probabilities are arbitrary.
-        self.transition_probability = np.array([[1, 0, 0],
-                                                [0, 1, 0],
-                                                [0, 0, 1]])
+        self.transition_probability = np.array([[.80, .1, .1],
+                                                [.1, .80, .1],
+                                                [.1, .1, .80]])
 
         # sUAS Parameters
         self.x0 = np.array([5, 0])  # Starting cell of the sUAS
@@ -36,8 +36,8 @@ class SoarerDrifterMDP:
         self.planning_horizon = None
 
         self.xgoals = None
-        self.num_balloons = None
-        self.num_releases = 0
+        self.num_balloons = None  # number of balloons onboard
+        self.num_releases = 0  # number of balloons released by suas
         self.ygoal = None
         self.balloon_dt = None
         self.initial_state = None
@@ -47,77 +47,47 @@ class SoarerDrifterMDP:
         self.balloon_reward_dict = {}  # stores balloon rewards for already explored release points.
 
 
+        #N,Q,T for MCTS
+        self.N = {}  # can carry these over from last search if we want.
+        self.Q = {}
+        self.T = []
+
     def set_xgoals(self, xgoal_list):
 
         self.xgoals = xgoal_list
         self.num_balloons = len(xgoal_list)
 
     def take_action(self, state, action):
-        '''
-        suas_action = action[0]
 
-        # Get the transition row based on the suas action taken
-        transition_row = np.copy(self.transition_probability[suas_action, :])
-
-        # Adjust row based on whether or not we are at the edge
-        if self.x_old[0] == 0:
-            transition_row[0] = 0.
-            transition_row = transition_row / np.sum(transition_row)
-        elif self.x_old[0] == (self.size[0] - 1):
-            transition_row[2] = 0.
-            transition_row = transition_row / np.sum(transition_row)
-
-        # Take action here!
-        x_new = self.suas_control(transition_row)
-        # Calculate the reward!
-        reward = self.calculate_reward(x_new, action)
-        self.x_old = np.copy(x_new)
-        self.state_history.append(np.copy(x_new))
-
-        return reward '''
+        # NON- DETERMINISTIC
         s = state
         A = action
+        transition_row = self.transition_probability[A[0]]
+        result = np.random.multinomial(1, transition_row)
+        control_result = np.argmax(result)
+
         if A:
             if A[1] == 1:  # if we release a balloon at the next step
 
                 B = self.field
                 self.x_release = s[0] + 1
-                self.y_release = s[1] + (-1*(A[0]-1))
+                self.y_release = s[1] + (-1*(control_result-1))
 
-                B.prop_balloon(s[0] + 1, s[1] + (-1*(A[0]-1)))
+                B.prop_balloon(s[0] + 1, s[1] + (-1*(control_result-1)))
 
                 self.release_traj[self.num_releases] = [B.position_history_x_samps,
                                                         B.position_history_y_samps,
                                                         B.position_history_x_orig, B.position_history_y_orig]
                 self.num_releases += 1
-        return ([s[0] + 1, s[1] + (-1*(A[0]-1)), s[2] - A[1]])
+        return ([s[0] + 1, s[1] + (-1*(control_result-1)), s[2] - A[1]])
 
-
-    def suas_control(self, transition_row):
-        # a function that John wrote, currently not used.
-        # implement something like this to make the problem non-deterministic.
-        result = np.random.multinomial(1, transition_row)
-        control_result = np.argmax(result)
-
-        x_new = self.x_old
-        x_new[1] += 1
-
-        if control_result == 0:
-            x_new[0] -= 1
-        elif control_result == 2:
-            x_new[0] += 1
-        else:
-            # Continue level!
-            pass
-        return x_new
 
 
     def calculate_reward(self, s, action):
-        ''' Calculates and returns expected reward
-        OVERALL RUNTIME:
+        ''' Calculates and returns EXPECTED reward
+        OVERALL RUNTIME (results may vary):
         before implementing dict: ~40 secs
         after implementing dict: ~9 secs
-        of course, these results will vary with input
         '''
         total_reward = 0
         balloon_action = action[1]
@@ -149,7 +119,7 @@ class SoarerDrifterMDP:
             if (y <= self.ymax) and (y >= self.ymin):
                 suas_position_cost = -0.1*y
             else:
-                suas_position_cost = -1000 # UUGE cost for going outside of bounds
+                suas_position_cost = -1000 # HUGE cost for going outside of bounds
 
 
             local_reward = t*(balloon_reward + suas_control_cost + suas_position_cost)
@@ -165,7 +135,7 @@ class SoarerDrifterMDP:
         if (x, y, bal) in self.balloon_reward_dict:
             balloon_reward = self.balloon_reward_dict[(x, y, bal)]
         else:
-            self.field.prop_balloon(x, y)
+            self.field.prop_balloon(x, y, y_goal)
             [mu, std] = self.field.calc_util()
             goal_index = self.num_balloons - bal
             balloon_reward = 100./abs(mu - self.xgoals[goal_index]) - 5.*std
@@ -252,22 +222,20 @@ class SoarerDrifterMDP:
         return [a_opt, v_opt]
 
 
-    def selectaction_SPARCE(self, s, d):
-        # sparce sampling method.
+    def selectaction_SPARCE(self, s, d, n):
+        # sparce sampling method. Does n random searches for each tree.
         # n = number of searches
-        n = 1
         gamma = 1 # tuning parameter
 
         if d == 0:
             return (None, 0)
         a_s, v_s = None, -math.inf
-        #print("s: ", s)
         A = self.getactionspace(s)
         for a in A:
             v = 0
             for i in range(n):
                 [s_p, r] = self.generative_model(s, a)
-                [a_p, v_p] = self.selectaction_SPARCE(s_p, d-1)
+                [a_p, v_p] = self.selectaction_SPARCE(s_p, d-1, n)
                 v = v + (r + gamma*v_p)/n
             if v > v_s:
                 a_s, v_s = a, v
@@ -277,28 +245,68 @@ class SoarerDrifterMDP:
 # MONTE CARLO TREE SEARCH (MCTS)
 
     def selectaction_MCTS(self, s, d):
-        # create N and Q Dictionaries
-        
+        # re-initialize N and Q Dictionaries
+        self.N = {}  # can carry these over from last search if we want.
+        self.Q = {}
+        self.T = []
+
+        self.gamma = 1
 
         for i in range(50):  # loop iterations? unsure how this works
             self.SIMULATE(s, d)
-        # a = argmax(Q(s,a))
-        return a
+
+        # pick a with max Q value at s
+        a = max(self.Q[tuple(s)], key=self.Q[tuple(s)].get)
+        #print(list(a))
+        return list(a)
+
 
     def SIMULATE(self, s, d):
+        c = 10 # TUNING parameter for exploration!!!
+        N = self.N
+        Q = self.Q
+        T = self.T
+        gamma = self.gamma
+
         if d == 0:
             return 0
         s = tuple(s) # does this have to be changed back to list?
-        if s not in T:
-            A_s = self.getactionspace(s)  # get action space for state s
-        """
-            for a in A_s:
-                    N(s,a) = N_o(s,a) # update number of times visited this state
-                    Q(s,a) = Q_o(s,a) # update state - value function
+        if s not in N: # if state dict doesn't exist yet, then add it.
+            N[s] = {}
+            Q[s] = {}
 
-            T = list(set().union(T, [s]) # s is a tuple, if list unhashable.
+        if s not in T:
+            #print('s not in T')
+            A_s = self.getactionspace(s)  # get action space for state s
+            for a in A_s:
+                    a = tuple(a)
+                    N[s][a] = 1 # update number of times visited this state
+                    Q[s][a] = 0 # update state - value function
+                    #T = list(set().union(T, [s])) # s is a tuple, if list unhashable.
+            self.T.append(s)
             return self.ROLLOUT(s,d)
-        """
+
+        N = self.N
+        Q = self.Q
+        N_s = sum(N[s].values())
+        Q_sa = Q[s]
+        N_sa = N[s]
+        value_dict = {}
+        for action, q in Q_sa.items():
+            n = N_sa[action]
+            # print("T: ", self.T)
+            # print("Q: ", self.Q)
+            # print("N: ", self.N)
+            # print("n: ", n)
+            value_dict[action] = q + c * math.sqrt(np.log(N_s)/n)
+
+        a = max(value_dict, key=value_dict.get)
+        (s_p, r) = self.generative_model(s,a)
+        q = r + gamma*self.SIMULATE(s_p, d-1)
+        self.N[s][a] = N[s][a] + 1
+        self.Q[s][a] = Q[s][a] + (q-Q[s][a])/N[s][a]
+        return q
+
 
     def ROLLOUT(self, s, d):
         if d == 0:
@@ -361,7 +369,6 @@ class SoarerDrifterMDP:
             suas_position_cost = -1000 # UUGE cost for going outside of bounds
 
         state = [s[0] + 1, s[1] + (-1*(action[0]-1)), s[2] - action[1]]
-        #state.append([s[0] + 1, s[1] + (-1*(action[0]-1)), s[2] - action[1]])
         reward = balloon_reward + suas_control_cost + suas_position_cost
 
         return (state, reward)

@@ -162,8 +162,9 @@ class wind_field:
     def prop_balloon(self, xstart, ystart):
         '''this method propagates a balloon through the vector field to
         determine the utility of releasing the balloon at the starting point.
-        xstart and y start are the absolute
-        starting positions of the balloon
+        xstart and ystart are the absolute starting positions of the balloon
+
+        y_goal was added for additional functionality.
         '''
 
         import numpy as np

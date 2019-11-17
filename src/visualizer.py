@@ -7,7 +7,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 
-matplotlib.use('TkAgg')  # for macs
+#matplotlib.use('TkAgg')  # for macs
 
 
 class animator:
@@ -22,7 +22,7 @@ class animator:
 
         # Initialize live plot
 
-        self.fig = plt.figure(figsize=(10, 10))
+        self.fig = plt.figure(figsize=(8, 8))
 
         self.ax = self.fig.add_subplot(111)  # create a subplot
 
@@ -134,7 +134,7 @@ class animator_mdp:
         # self.wind_field.position_history_y_samps = y_release + self.wind_field.position_history_y_samps
         # Initialize live plot
 
-        self.fig = plt.figure(figsize=(10, 10))
+        self.fig = plt.figure(figsize=(8, 8))
 
         self.ax = self.fig.add_subplot(111)  # create a subplot
 

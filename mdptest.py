@@ -13,22 +13,21 @@ import matplotlib
 import clear_folder
 import time as t
 
-#matplotlib.use('TkAgg')  # for macs
 
 logFormatter = logging.Formatter('%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s')
 logger = logging.Logger(logFormatter)
 hdlr = logging.FileHandler(datetime.datetime.now().strftime('logs/drifter_mdp_%H_%M_%d_%m_%Y.log'))
 logger.addHandler(hdlr)
-
 consoleHandler = logging.StreamHandler()
 consoleHandler.setFormatter(logFormatter)
 logger.addHandler(consoleHandler)
-
 logger.setLevel(logging.INFO)
+
+
 test_steps = 100
-n = 10  # cell height of field (y)
-m = 18  # cell width of field (x)
-length = 3  # cell unit width
+n = 10  # # of cells height of field (y)
+m = 18  # # of cells width of field (x)
+length = 5  # cell unit width
 n_samples = 75  # number of balloons propagated at each space
 
 
@@ -36,8 +35,13 @@ time_start = t.process_time()
 
 field = gen_random_field.field_generator(n, m, length, 0, 0.15, n_samples, 'Normal')
 field.nrm_mean = 0  # Can use matrix here to specify distributions for each measurement
-field.nrm_sig = 1  # Can use matrix here to specify distributions for each measurement
-field.sample()
+field.nrm_sig = 1
+
+field.nrm_mean_s = 0
+field.nrm_sig_s = 0.2
+field.nrm_mean_h = 0
+field.nrm_sig_h = 0.4
+field.sample_heading_speed()
 logger.info('generated field')
 
 A = wind_field.wind_field(field.vel, field.loc, length, field.nsamps, field.samples)
@@ -62,13 +66,25 @@ logger.info('running mdp simulation...')
 mdp.initial_state = [5, 2, mdp.num_balloons]  # initialize state
 mdp.state_history.append(mdp.initial_state)
 state = mdp.initial_state
-horizon = 7
+horizon = 5
 logger.info('Horizon: {}'.format(horizon))
 for i in range(30):
     [a_opt, v_opt] = mdp.selectaction(state, horizon)
-    #[a_opt, v_opt] = mdp.selectaction_SPARCE(state, horizon)
+    #[a_opt, v_opt] = mdp.selectaction_SPARCE(state, horizon, 1)
+    #a_opt = mdp.selectaction_MCTS(state, horizon)
+    # print(mdp.Q)
+    # print(mdp.N)
+    # print(mdp.T)
+    #print("state at k:", state)
+    #print("opt. action at k:", a_opt)
     state = mdp.take_action(state, a_opt)
+    #print("state at k+1:", state)
+
     mdp.state_history.append(state)
+
+# print('Q: ', mdp.Q)
+# print('N: ',mdp.N)
+# print('T: ',mdp.T)
 
 time_end = t.process_time()
 duration = time_end - time_start
@@ -84,7 +100,7 @@ vis.save = True
 vis.init_live_plot(mdp)
 
 for time in range(vis.total_time):
-    t.sleep(0.1)
+    #t.sleep(0.1)
     vis.measurement_update(time)
 
 gif = input('make gif? (y/n)')

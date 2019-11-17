@@ -51,8 +51,8 @@ class field_generator:
         else:
             raise DistroNotRecognized
 
-        self.nsamps = nsamps
-        self.length = length
+        self.nsamps = nsamps  # number of wind field samples
+        self.length = length  # cell unit width
 
         # initialize sampling distributions (can change to matrices to make different for each pt)
         # to change, just change in outer script
@@ -64,7 +64,8 @@ class field_generator:
     def sample(self):
         '''Takes nsamps samples of the wind field according to
         the distro variable. i.e. if we are simulating 500 balloons,
-        this method will create an mxnx500 matrix of wind field measurements.
+        this method will create two 500xmxn matrix of wind field measurements.
+        One for x direction and one for y directon.
 
         Currently the only supported distributions
         are uniform and normal.'''
@@ -90,6 +91,58 @@ class field_generator:
             elif self.distro == 'Uniform':
                 x = np.random.uniform(self.uni_mean-self.uni_rng, self.uni_mean+self.uni_rng, size) + x_orig
                 y = y_orig  # + np.random.uniform(-0.1,0.1, size)
+
+            x_out[i, :, :] = x
+            y_out[i, :, :] = y
+
+        self.samples = [x_out, y_out]
+
+    def sample_heading_speed(self):
+        '''Takes nsamps samples of the wind field according to
+        the distro variable. i.e. if we are simulating 500 balloons,
+        this method will create two 500xmxn matrix of wind field measurements.
+        One for x direction and one for y directon.
+
+        This function differentiates from above sample method by
+        reasoning over heading and speed variation, a change that was
+        made in the SciTech paper.
+
+        Currently the only supported distributions
+        are uniform and normal.'''
+        import numpy as np
+
+        x_orig = self.x_matrix
+        y_orig = self.y_matrix
+
+        N = self.nsamps
+        size = self.x_matrix.shape
+
+        size_out = (N,) + size
+
+        x_out = np.zeros(size_out)
+        y_out = np.zeros(size_out)
+
+        # convert x_orig and y_orig to heading and speed matrices.
+        speed_orig = (x_orig**2 + y_orig**2)/2
+        heading_orig = np.arctan2(x_orig, y_orig)  # checked in terminal
+
+        for i in range(0, N):
+
+            if self.distro == 'Normal':
+                ds = np.random.normal(self.nrm_mean_s, self.nrm_sig_s, size)
+                dh = np.random.normal(self.nrm_mean_h, self.nrm_sig_h, size)
+
+            elif self.distro == 'Uniform':
+                ds = np.random.uniform(self.uni_mean_s-self.uni_rng_s,
+                                       self.uni_mean_s+self.uni_rng_s, size)
+                dh = np.random.uniform(self.uni_mean_h-self.uni_rng_h,
+                                       self.uni_mean_h+self.uni_rng_h, size)
+
+            heading = heading_orig + dh
+            speed  = speed_orig + ds
+
+            x = speed * np.sin(heading)
+            y = speed * np.cos(heading)
 
             x_out[i, :, :] = x
             y_out[i, :, :] = y
