@@ -165,6 +165,11 @@ class wind_field:
         xstart and ystart are the absolute starting positions of the balloon
 
         y_goal was added for additional functionality.
+
+        TODO:
+        - make an input the y_goal position, prop the balloons till they
+        reach that final y_goal. store trajectories in lists, not in numpy
+        arrays so that each list can be a different length.
         '''
 
         import numpy as np

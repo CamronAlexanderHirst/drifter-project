@@ -135,7 +135,7 @@ class SoarerDrifterMDP:
         if (x, y, bal) in self.balloon_reward_dict:
             balloon_reward = self.balloon_reward_dict[(x, y, bal)]
         else:
-            self.field.prop_balloon(x, y, y_goal)
+            self.field.prop_balloon(x, y)
             [mu, std] = self.field.calc_util()
             goal_index = self.num_balloons - bal
             balloon_reward = 100./abs(mu - self.xgoals[goal_index]) - 5.*std

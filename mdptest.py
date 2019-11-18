@@ -72,19 +72,8 @@ for i in range(30):
     [a_opt, v_opt] = mdp.selectaction(state, horizon)
     #[a_opt, v_opt] = mdp.selectaction_SPARCE(state, horizon, 1)
     #a_opt = mdp.selectaction_MCTS(state, horizon)
-    # print(mdp.Q)
-    # print(mdp.N)
-    # print(mdp.T)
-    #print("state at k:", state)
-    #print("opt. action at k:", a_opt)
     state = mdp.take_action(state, a_opt)
-    #print("state at k+1:", state)
-
     mdp.state_history.append(state)
-
-# print('Q: ', mdp.Q)
-# print('N: ',mdp.N)
-# print('T: ',mdp.T)
 
 time_end = t.process_time()
 duration = time_end - time_start

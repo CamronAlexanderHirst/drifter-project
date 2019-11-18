@@ -1,4 +1,4 @@
-'''function to generate a wind field
+'''class to generate a wind field
 Author: Alex Hirst
 '''
 
