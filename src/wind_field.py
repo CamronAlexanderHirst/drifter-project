@@ -65,11 +65,11 @@ class wind_field:
             x_traj = self.position_history_x_samps
             y_traj = self.position_history_y_samps
             for i in range(self.nsamps):
-                plt.plot(x_traj[i, :], y_traj[i, :])
+                plt.plot(x_traj[i], y_traj[i])
 
         if self.plot_samps_mean:
             plt.plot(self.xmean_samps,
-                     self.position_history_y_samps[0, -1], 'ro', markersize=10)
+                     self.position_history_y_samps[0][-1], 'ro', markersize=10)
 
         if self.plot_orig:
             x_traj = self.position_history_x_orig
@@ -159,7 +159,7 @@ class wind_field:
 
         return [x_value, y_value]
 
-    def prop_balloon(self, xstart, ystart):
+    def prop_balloon(self, xstart, ystart, y_goal):
         '''this method propagates a balloon through the vector field to
         determine the utility of releasing the balloon at the starting point.
         xstart and ystart are the absolute starting positions of the balloon
@@ -178,52 +178,63 @@ class wind_field:
         tend = int((self.y_goal-ystart))  # to get constant y_end
         # Propogate samples:
         N = self.nsamps
-        t_vect = np.arange(0, tend+dt, dt)
-        x_vect = np.zeros((N, 1, len(t_vect)))
-        y_vect = np.zeros((N, 1, len(t_vect)))
 
-        x_vect[:, 0, 0] = xstart
-        y_vect[:, 0, 0] = ystart
-
+        t_list = []
+        x_list = []
+        y_list = []
+        #print("proping wind field")
         for n in range(0, N):
-            for i in range(1, len(t_vect)):
-                [x_vel, y_vel] = self.get_wind(x_vect[n, 0, i-1], y_vect[n, 0, i-1], n, 'samples')
-                x_vect[n, 0, i] = x_vect[n, 0, i-1] + x_vel*dt
-                y_vect[n, 0, i] = y_vect[n, 0, i-1] + y_vel*dt
+            x = [xstart]
+            y = [ystart]
+            while y[-1] < y_goal:
+                [x_vel, y_vel] = self.get_wind(x[-1], y[-1], n, 'samples')
+                x.append(x[-1] + x_vel*dt)
+                y.append(y[-1] + y_vel*dt)
+            x_list.append(x)
+            y_list.append(y)
 
         # position history of balloon propagated through sampled fields
-        self.position_history_x_samps = np.squeeze(x_vect)  # x-position
-        self.position_history_y_samps = np.squeeze(y_vect)  # y-position
+        self.position_history_x_samps = x_list  # x-position
+        self.position_history_y_samps = y_list  # y-position
 
         # Propagate original:
         N = 1
-        t_vect = np.arange(0, tend+dt, dt)
-        x_vect = np.zeros((N, 1, len(t_vect)))
-        y_vect = np.zeros((N, 1, len(t_vect)))
-
-        x_vect[:, 0, 0] = xstart
-        y_vect[:, 0, 0] = ystart
+        t_list = []
+        x_list = []
+        y_list = []
 
         for n in range(0, N):
-            for i in range(1, len(t_vect)):
-                [x_vel, y_vel] = self.get_wind(x_vect[n, 0, i-1], y_vect[n, 0, i-1], n, 'original')
-                x_vect[n, 0, i] = x_vect[n, 0, i-1] + x_vel*dt
-                y_vect[n, 0, i] = y_vect[n, 0, i-1] + y_vel*dt
+            x = [xstart]
+            y = [ystart]
+            while y[-1] < y_goal:
+                [x_vel, y_vel] = self.get_wind(x[-1], y[-1], n, 'samples')
+                x.append(x[-1] + x_vel*dt)
+                y.append(y[-1] + y_vel*dt)
+            x_list.append(x)
+            y_list.append(y)
 
         # position history of balloon propagated through original field
-        self.position_history_x_orig = np.squeeze(x_vect)  # x-position
-        self.position_history_y_orig = np.squeeze(y_vect)  # y-position
+        self.position_history_x_orig = x_list  # x-position
+        self.position_history_y_orig = y_list  # y-position
+        #print("done")
 
     def calc_mean(self):
         import numpy as np
 
         # take last x-values:
-        self.xmean_samps = np.mean(self.position_history_x_samps[:, -1])
-        self.xmean_orig = np.mean(self.position_history_x_orig[-1])
+        x_orig = self.position_history_x_orig
+        x_samps = self.position_history_x_samps
+        l = [x[-1] for x in x_samps]
+
+        self.xmean_samps = np.mean(l)
+        self.xmean_orig = np.mean(x_orig[0][-1])
 
     def calc_util(self):
         from scipy.stats import norm
 
-        mu, std = norm.fit(self.position_history_x_samps[:, -1])
+        x_samps = self.position_history_x_samps
+        l = [x[-1] for x in x_samps]
+
+        mu, std = norm.fit(l)
 
         return [mu, std]

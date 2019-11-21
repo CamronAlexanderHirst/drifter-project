@@ -11,6 +11,10 @@ import numpy as np
 
 
 class animator:
+    """
+    animator class for the balloonproptest.py script. Will only display the
+    wind field and balloon trajectories.
+    """
 
     def __init__(self):
 
@@ -68,9 +72,9 @@ class animator:
 
         for j in range(nsamps):
             if time <= self.trail_length:
-                self.line_list[j].set_data(posx[j, 0:time], posy[j, 0:time])
+                self.line_list[j].set_data(posx[j][0:time], posy[j][0:time])
             else:
-                self.line_list[j].set_data(posx[j, 0:time][-self.trail_length:], posy[j, 0:time][-self.trail_length:])
+                self.line_list[j].set_data(posx[j][0:time][-self.trail_length:], posy[j][0:time][-self.trail_length:])
 
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
@@ -98,6 +102,9 @@ class animator:
 
 
 class animator_mdp:
+    """
+    animator for the mdp solver
+    """
 
     def __init__(self):
 
@@ -111,7 +118,7 @@ class animator_mdp:
         self.num_ballons = mdp.num_balloons
         wind_field = self.wind_field
 
-        self.state_history = mdp.state_history
+        self.state_history = mdp.state_history  # aircraft state history
         self.release_traj = mdp.release_traj
 
         # find state where balloon is realeased
@@ -128,14 +135,14 @@ class animator_mdp:
 
         # self.release_time = i
         # i is used for the total time
-        self.total_time = i + len(wind_field.position_history_y_orig) + 1
+        y_pos = wind_field.position_history_y_samps
+        self.total_time = i + max([len(b) for b in y_pos]) + 1
 
         # y_release = self.state_history[i][1]
         # self.wind_field.position_history_y_samps = y_release + self.wind_field.position_history_y_samps
         # Initialize live plot
 
         self.fig = plt.figure(figsize=(8, 8))
-
         self.ax = self.fig.add_subplot(111)  # create a subplot
 
         # Starting point is plotted as a diamond
@@ -207,9 +214,9 @@ class animator_mdp:
                 time2 = time - release_time
                 for j in range(nsamps):
                     if time <= self.trail_length:
-                        self.line_dict[release_num][j].set_data(posx[j, 0:time2], posy[j, 0:time2])
+                        self.line_dict[release_num][j].set_data(posx[j][0:time2], posy[j][0:time2])
                     else:
-                        self.line_dict[release_num][j].set_data(posx[j, 0:time2][-self.trail_length:], posy[j, 0:time2][-self.trail_length:])
+                        self.line_dict[release_num][j].set_data(posx[j][0:time2][-self.trail_length:], posy[j][0:time2][-self.trail_length:])
 
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()

@@ -23,9 +23,9 @@ class SoarerDrifterMDP:
                               [0, 1], [1, 1], [2, 1]]
 
         # TODO: Chosen probabilities are arbitrary.
-        self.transition_probability = np.array([[.80, .1, .1],
-                                                [.1, .80, .1],
-                                                [.1, .1, .80]])
+        self.transition_probability = np.array([[.9, .05, .05],
+                                                [.05, .9, .05],
+                                                [.05, .05, .9]])
 
         # sUAS Parameters
         self.x0 = np.array([5, 0])  # Starting cell of the sUAS
@@ -37,7 +37,7 @@ class SoarerDrifterMDP:
 
         self.xgoals = None
         self.num_balloons = None  # number of balloons onboard
-        self.num_releases = 0  # number of balloons released by suas
+        self.num_releases = 0  # number of balloons released by suas - initialized at 0
         self.ygoal = None
         self.balloon_dt = None
         self.initial_state = None
@@ -73,12 +73,13 @@ class SoarerDrifterMDP:
                 self.x_release = s[0] + 1
                 self.y_release = s[1] + (-1*(control_result-1))
 
-                B.prop_balloon(s[0] + 1, s[1] + (-1*(control_result-1)))
+                B.prop_balloon(s[0] + 1, s[1] + (-1*(control_result-1)), self.ygoal)
 
                 self.release_traj[self.num_releases] = [B.position_history_x_samps,
                                                         B.position_history_y_samps,
-                                                        B.position_history_x_orig, B.position_history_y_orig]
-                self.num_releases += 1
+                                                        B.position_history_x_orig,
+                                                        B.position_history_y_orig]
+                self.num_releases += 1  # add count for number of releases
         return ([s[0] + 1, s[1] + (-1*(control_result-1)), s[2] - A[1]])
 
 
@@ -135,12 +136,33 @@ class SoarerDrifterMDP:
         if (x, y, bal) in self.balloon_reward_dict:
             balloon_reward = self.balloon_reward_dict[(x, y, bal)]
         else:
-            self.field.prop_balloon(x, y)
+            self.field.prop_balloon(x, y, self.ygoal)
             [mu, std] = self.field.calc_util()
-            goal_index = self.num_balloons - bal
-            balloon_reward = 100./abs(mu - self.xgoals[goal_index]) - 5.*std
-            self.balloon_reward_dict[(x, y, bal)] = balloon_reward
+            if abs(mu - self.xgoals[goal_index]) > 5:
+                balloon_reward = -500
+                self.balloon_reward_dict[(x, y, bal)] = balloon_reward
+            else:
+                goal_index = self.num_balloons - bal
+                balloon_reward = 10./abs(mu - self.xgoals[goal_index]) - 2.5*std
+                self.balloon_reward_dict[(x, y, bal)] = balloon_reward
         return balloon_reward
+
+    def calc_uas_reward(self, suas_action, y):
+        # Control action costs
+        suas_control_cost = 0
+        if suas_action == 0:
+            suas_control_cost = -.1
+        if suas_action == 1:
+            suas_control_cost = 0.
+        if suas_action == 2:
+            suas_control_cost = .1
+
+        if (y <= self.ymax) and (y >= self.ymin):
+            suas_position_cost = -0.1*y
+        else:
+            suas_position_cost = -1000 # UUGE cost for going outside of bounds
+
+        return suas_control_cost + suas_position_cost
 
 
     def reset_mdp(self):
@@ -244,15 +266,19 @@ class SoarerDrifterMDP:
 
 # MONTE CARLO TREE SEARCH (MCTS)
 
-    def selectaction_MCTS(self, s, d):
+    def selectaction_MCTS(self, s, d, c, gamma, n):
         # re-initialize N and Q Dictionaries
         self.N = {}  # can carry these over from last search if we want.
         self.Q = {}
         self.T = []
 
-        self.gamma = 1
+        self.c = c
+        self.gamma = gamma
 
-        for i in range(50):  # loop iterations? unsure how this works
+        # d = planning Horizon
+        # s = state
+        #n = 50, c = 100, gamma = 1 works
+        for i in range(n):  # loop iterations? unsure how this works
             self.SIMULATE(s, d)
 
         # pick a with max Q value at s
@@ -262,7 +288,7 @@ class SoarerDrifterMDP:
 
 
     def SIMULATE(self, s, d):
-        c = 10 # TUNING parameter for exploration!!!
+        c = self.c  # TUNING parameter for exploration!!!
         N = self.N
         Q = self.Q
         T = self.T
@@ -332,10 +358,10 @@ class SoarerDrifterMDP:
         # All of the information about the state transitions and rewards is
         # represented by G. The state transition probabilities and expected
         # reward functions are not used directly.
-
-        k = np.random.uniform(0,1)
         suas_action = action[0]
         balloon_action = action[1]
+
+        k = np.random.uniform(0,1)
         T = self.transition_probability[suas_action]
 
         if k <= T[0]:
@@ -354,21 +380,9 @@ class SoarerDrifterMDP:
         else:
             balloon_reward = 0.
 
-        # Control action costs
-        suas_control_cost = 0
-        if suas_action == 0:
-            suas_control_cost = -.1
-        if suas_action == 1:
-            suas_control_cost = 0.
-        if suas_action == 2:
-            suas_control_cost = .1
+        suas_reward = self.calc_uas_reward(suas_action, y)
 
-        if (y <= self.ymax) and (y >= self.ymin):
-            suas_position_cost = -0.1*y
-        else:
-            suas_position_cost = -1000 # UUGE cost for going outside of bounds
-
-        state = [s[0] + 1, s[1] + (-1*(action[0]-1)), s[2] - action[1]]
-        reward = balloon_reward + suas_control_cost + suas_position_cost
+        state = [x, y, s[2] - action[1]]
+        reward = balloon_reward + suas_reward
 
         return (state, reward)

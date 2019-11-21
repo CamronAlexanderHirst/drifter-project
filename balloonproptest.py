@@ -42,7 +42,7 @@ for i in np.linspace(0, xend-xstart, num_release_pts):
 
 print(start)
 for start in start:
-    A.prop_balloon(start[0], start[1])
+    A.prop_balloon(start[0], start[1], A.y_goal)
     stats = A.calc_util()
     print('Start: ' + str(start))
     print('Mu: ' + str(stats[0]))

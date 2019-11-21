@@ -24,56 +24,73 @@ logger.addHandler(consoleHandler)
 logger.setLevel(logging.INFO)
 
 
-test_steps = 100
+test_steps = 100 # currently unused, number of actions to take?
 n = 10  # # of cells height of field (y)
-m = 18  # # of cells width of field (x)
-length = 5  # cell unit width
+m = 20  # # of cells width of field (x)
+length = 5  # cell unit width for field estimate
 n_samples = 75  # number of balloons propagated at each space
 
 
 time_start = t.process_time()
 
-field = gen_random_field.field_generator(n, m, length, 0, 0.15, n_samples, 'Normal')
+field = gen_random_field.field_generator(n, m, length, 0, 0.25, n_samples, 'Normal')
 field.nrm_mean = 0  # Can use matrix here to specify distributions for each measurement
 field.nrm_sig = 1
 
+# speed statistics
 field.nrm_mean_s = 0
-field.nrm_sig_s = 0.2
+field.nrm_sig_s = 0.25
+# heading statistics
 field.nrm_mean_h = 0
-field.nrm_sig_h = 0.4
-field.sample_heading_speed()
+field.nrm_sig_h = 0.25
+field.sample_heading_speed() # sample n_samples fields with heading and speed stats
 logger.info('generated field')
 
 A = wind_field.wind_field(field.vel, field.loc, length, field.nsamps, field.samples)
 # A.xgoal = 18 # Not currently used?
-# A.ygoal = 18
+# A.y_goal = 18
 
 # Create MDP object
 mdp = mdp.SoarerDrifterMDP(test_steps)
-mdp.set_xgoals([11, 16, 25])
-mdp.ygoal = 18
-mdp.balloon_dt = 0.5
+mdp.set_xgoals([20, 40, 60])
+mdp.ygoal = 20
+mdp.balloon_dt = 0.25
 logger.info('X Goals: {}'.format(mdp.xgoals))
 logger.info('Y Goals: {}'.format(mdp.ygoal))
 logger.info('Balloon dt: {}'.format(mdp.balloon_dt))
 logger.info('generated mdp')
 
 mdp.import_windfield(A)  # import windfield
-mdp.import_actionspace([0, 42], [0, 5])  # import action space [xlimits], [ylimits]
+mdp.import_actionspace([0, 110], [0, 10])  # import action space [xlimits], [ylimits]
 logger.info('imported windfield and actionspace')
 
 logger.info('running mdp simulation...')
-mdp.initial_state = [5, 2, mdp.num_balloons]  # initialize state
+mdp.initial_state = [5, 0, mdp.num_balloons]  # initialize state
 mdp.state_history.append(mdp.initial_state)
 state = mdp.initial_state
-horizon = 5
+
+# planner settings
+horizon = 5  # planning horizon
+num_actions = 90  # number of actions for MDP to take
+solver = 'MCTS'  # either 'Forward', 'Sparce', or 'MCTS'
+
 logger.info('Horizon: {}'.format(horizon))
-for i in range(30):
-    [a_opt, v_opt] = mdp.selectaction(state, horizon)
-    #[a_opt, v_opt] = mdp.selectaction_SPARCE(state, horizon, 1)
-    #a_opt = mdp.selectaction_MCTS(state, horizon)
+logger.info('Number of actions: {}'.format(num_actions))
+logger.info('Solver: {}'.format(solver))
+for i in range(num_actions):
+    print(i)
+    if solver == 'Forward':
+        [a_opt, v_opt] = mdp.selectaction(state, horizon)
+    if solver == 'Sparce':
+        [a_opt, v_opt] = mdp.selectaction_SPARCE(state, horizon, 1)
+    if solver == 'MCTS':
+        a_opt = mdp.selectaction_MCTS(state, horizon, 50, .95, 50)
+    print("action: ", a_opt)
+    print("state: ", state)
+
     state = mdp.take_action(state, a_opt)
     mdp.state_history.append(state)
+
 
 time_end = t.process_time()
 duration = time_end - time_start
