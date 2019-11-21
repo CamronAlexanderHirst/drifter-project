@@ -36,9 +36,10 @@ class SoarerDrifterMDP:
         self.planning_horizon = None
 
         self.xgoals = None
+        self.ygoal = None
         self.num_balloons = None  # number of balloons onboard
         self.num_releases = 0  # number of balloons released by suas - initialized at 0
-        self.ygoal = None
+
         self.balloon_dt = None
         self.initial_state = None
         self.state_history = []
@@ -85,7 +86,7 @@ class SoarerDrifterMDP:
 
 
     def calculate_reward(self, s, action):
-        ''' Calculates and returns EXPECTED reward
+        ''' Calculates and returns EXPECTED reward for FORWARD Search
         OVERALL RUNTIME (results may vary):
         before implementing dict: ~40 secs
         after implementing dict: ~9 secs
@@ -108,22 +109,9 @@ class SoarerDrifterMDP:
             else:
                 balloon_reward = 0.
 
-            # Control action costs
-            suas_control_cost = 0
-            if suas_action == 0:
-                suas_control_cost = -.1
-            if suas_action == 1:
-                suas_control_cost = 0.
-            if suas_action == 2:
-                suas_control_cost = .1
+            uas_reward = self.calc_uas_reward(suas_action, y)
 
-            if (y <= self.ymax) and (y >= self.ymin):
-                suas_position_cost = -0.1*y
-            else:
-                suas_position_cost = -1000 # HUGE cost for going outside of bounds
-
-
-            local_reward = t*(balloon_reward + suas_control_cost + suas_position_cost)
+            local_reward = t*(balloon_reward + uas_reward)
             total_reward = total_reward + local_reward
         return total_reward # return average reward
 
@@ -143,9 +131,10 @@ class SoarerDrifterMDP:
                 self.balloon_reward_dict[(x, y, bal)] = balloon_reward
             else:
                 goal_index = self.num_balloons - bal
-                balloon_reward = 10./abs(mu - self.xgoals[goal_index]) - 2.5*std
+                balloon_reward = 100./abs(mu - self.xgoals[goal_index]) - 2.5*std
                 self.balloon_reward_dict[(x, y, bal)] = balloon_reward
         return balloon_reward
+
 
     def calc_uas_reward(self, suas_action, y):
         # Control action costs
@@ -221,7 +210,6 @@ class SoarerDrifterMDP:
 
     def selectaction(self, s, d):
         # Forward search algorithm... over finite horizon d
-
         gamma = 1  # tuning parameter
         if d == 0:
             return (None, 0)
@@ -302,13 +290,11 @@ class SoarerDrifterMDP:
             Q[s] = {}
 
         if s not in T:
-            #print('s not in T')
             A_s = self.getactionspace(s)  # get action space for state s
             for a in A_s:
                     a = tuple(a)
-                    N[s][a] = 1 # update number of times visited this state
+                    N[s][a] = 0 # update number of times visited this state
                     Q[s][a] = 0 # update state - value function
-                    #T = list(set().union(T, [s])) # s is a tuple, if list unhashable.
             self.T.append(s)
             return self.ROLLOUT(s,d)
 
@@ -320,11 +306,10 @@ class SoarerDrifterMDP:
         value_dict = {}
         for action, q in Q_sa.items():
             n = N_sa[action]
-            # print("T: ", self.T)
-            # print("Q: ", self.Q)
-            # print("N: ", self.N)
-            # print("n: ", n)
-            value_dict[action] = q + c * math.sqrt(np.log(N_s)/n)
+            if n == 0:
+                value_dict[action] = math.inf
+            else:
+                value_dict[action] = q + c * math.sqrt(np.log(N_s)/n)
 
         a = max(value_dict, key=value_dict.get)
         (s_p, r) = self.generative_model(s,a)

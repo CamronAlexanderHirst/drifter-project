@@ -137,6 +137,8 @@ class animator_mdp:
         # i is used for the total time
         y_pos = wind_field.position_history_y_samps
         self.total_time = i + max([len(b) for b in y_pos]) + 1
+        if len(self.state_history) > self.total_time:
+            self.total_time = len(self.state_history)
 
         # y_release = self.state_history[i][1]
         # self.wind_field.position_history_y_samps = y_release + self.wind_field.position_history_y_samps

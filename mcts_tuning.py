@@ -9,9 +9,10 @@ from src import mdp
 from src import wind_field
 from src import gen_random_field
 from src import visualizer
-import matplotlib
+import matplotlib.pyplot as plt
 import clear_folder
 import time as t
+
 
 horizons = [3,5,7,9,11] # planning horizon
 cs = [100] # exploration factors
@@ -29,10 +30,10 @@ for config in configs:
 
 print("total number of tests: ", len(configs)*10)
 
-for i in range(10):
+for i in range(1):
     test_steps = 100 # currently unused, number of actions to take?
     n = 10  # # of cells height of field (y)
-    m = 20  # # of cells width of field (x)
+    m = 25  # # of cells width of field (x)
     length = 5  # cell unit width for field estimate
     n_samples = 75  # number of balloons propagated at each space
     field = gen_random_field.field_generator(n, m, length, 0, 0.25, n_samples, 'Normal')
@@ -63,8 +64,8 @@ for i in range(10):
         mdp1.ygoal = 20
         mdp1.balloon_dt = 0.25
         mdp1.import_windfield(A)  # import windfield
-        mdp1.import_actionspace([0, 110], [0, 10])  # import action space [xlimits], [ylimits]
-        mdp1.initial_state = [5, 0, mdp1.num_balloons]  # initialize state
+        mdp1.import_actionspace([0, 120], [0, 10])  # import action space [xlimits], [ylimits]
+        mdp1.initial_state = [10, 0, mdp1.num_balloons]  # initialize state
         mdp1.state_history.append(mdp1.initial_state)
         state = mdp1.initial_state
 
@@ -96,3 +97,9 @@ for i in range(10):
         config_stats[tuple(config)].append(statistics)
 
 print("config_stats:", config_stats)
+
+
+# plt.figure()
+# for config_stat in config_stats:
+#
+# plt.

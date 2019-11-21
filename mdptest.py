@@ -53,7 +53,7 @@ A = wind_field.wind_field(field.vel, field.loc, length, field.nsamps, field.samp
 # Create MDP object
 mdp = mdp.SoarerDrifterMDP(test_steps)
 mdp.set_xgoals([20, 40, 60])
-mdp.ygoal = 20
+mdp.ygoal = 30
 mdp.balloon_dt = 0.25
 logger.info('X Goals: {}'.format(mdp.xgoals))
 logger.info('Y Goals: {}'.format(mdp.ygoal))
@@ -82,9 +82,9 @@ for i in range(num_actions):
     if solver == 'Forward':
         [a_opt, v_opt] = mdp.selectaction(state, horizon)
     if solver == 'Sparce':
-        [a_opt, v_opt] = mdp.selectaction_SPARCE(state, horizon, 1)
+        [a_opt, v_opt] = mdp.selectaction_SPARCE(state, horizon, 2)
     if solver == 'MCTS':
-        a_opt = mdp.selectaction_MCTS(state, horizon, 50, .95, 50)
+        a_opt = mdp.selectaction_MCTS(state, horizon, 100, .95, 100) # c, gamma, n
     print("action: ", a_opt)
     print("state: ", state)
 
