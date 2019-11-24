@@ -14,15 +14,13 @@ import clear_folder
 import time as t
 
 
-horizons = [5,7,9,11] # planning horizon
-cs = [100] # exploration factors
-ns = [100] # number of runs
+horizons = [5] # planning horizon
+ns = [1,2,3] # number of runs
 
 configs = []
 for h in horizons:
-    for c in cs:
-        for n in ns:
-            configs.append([h, c, n])
+    for n in ns:
+        configs.append([h, n])
 
 config_stats = {}
 for config in configs:
@@ -51,8 +49,7 @@ for i in range(10):
     for config in configs:
 
         horizon = config[0]
-        c = config[1]
-        n = config[2]
+        n = config[1]
 
         time_start = t.process_time()
         reward = 0
@@ -61,7 +58,7 @@ for i in range(10):
         # Create MDP object
         mdp1 = mdp.SoarerDrifterMDP(test_steps)
         mdp1.set_xgoals([20, 30, 40, 50])
-        mdp1.ygoal = 20
+        mdp1.ygoal = 30
         mdp1.balloon_dt = 0.25
         mdp1.import_windfield(A)  # import windfield
         mdp1.import_actionspace([0, 120], [0, 10])  # import action space [xlimits], [ylimits]
@@ -74,7 +71,7 @@ for i in range(10):
         for i in range(num_actions):
             #print(i)
 
-            a_opt = mdp1.selectaction_MCTS(state, horizon, c, .95, n)
+            [a_opt, v_opt] = mdp1.selectaction_SPARCE(state, horizon, n)
             #print("action: ", a_opt)
             #print("state: ", state)
 

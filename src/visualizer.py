@@ -115,7 +115,7 @@ class animator_mdp:
     def init_live_plot(self, mdp):
 
         self.wind_field = mdp.field
-        self.num_ballons = mdp.num_balloons
+        self.num_ballons = mdp.num_goals
         wind_field = self.wind_field
 
         self.state_history = mdp.state_history  # aircraft state history
@@ -148,8 +148,8 @@ class animator_mdp:
         self.ax = self.fig.add_subplot(111)  # create a subplot
 
         # Starting point is plotted as a diamond
-        for xgoal in mdp.xgoals:
-            self.ax.plot(xgoal, mdp.ygoal, 'rD', markersize=10)
+        for i in range(len(mdp.xgoals)):
+            self.ax.plot(mdp.xgoals[i], mdp.ygoals[i], 'rD', markersize=10)
 
         # plot vector field
         xmat = wind_field.x_matrix

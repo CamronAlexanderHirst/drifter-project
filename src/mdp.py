@@ -36,8 +36,8 @@ class SoarerDrifterMDP:
         self.planning_horizon = None
 
         self.xgoals = None
-        self.ygoal = None
-        self.num_balloons = None  # number of balloons onboard
+        self.ygoals = None
+        self.num_goals = None  # number of balloons onboard
         self.num_releases = 0  # number of balloons released by suas - initialized at 0
 
         self.balloon_dt = None
@@ -46,17 +46,19 @@ class SoarerDrifterMDP:
         self.release_traj = {}
 
         self.balloon_reward_dict = {}  # stores balloon rewards for already explored release points.
-
+        self.balloon_stats_dict = {}  # stores balloon statistics
+        self.num_unique_queries = 0
 
         #N,Q,T for MCTS
         self.N = {}  # can carry these over from last search if we want.
         self.Q = {}
         self.T = []
 
-    def set_xgoals(self, xgoal_list):
-
+    def set_goals(self, xgoal_list, ygoal_list):
+        # sets the goals for the balloon
         self.xgoals = xgoal_list
-        self.num_balloons = len(xgoal_list)
+        self.ygoals = ygoal_list
+        self.num_goals = len(xgoal_list)  # assume num balloons = num goals
 
     def take_action(self, state, action):
 
@@ -74,7 +76,8 @@ class SoarerDrifterMDP:
                 self.x_release = s[0] + 1
                 self.y_release = s[1] + (-1*(control_result-1))
 
-                B.prop_balloon(s[0] + 1, s[1] + (-1*(control_result-1)), self.ygoal)
+                ygoal = self.ygoals[self.num_goals - s[2]]
+                B.prop_balloon(s[0] + 1, s[1] + (-1*(control_result-1)), ygoal)
 
                 self.release_traj[self.num_releases] = [B.position_history_x_samps,
                                                         B.position_history_y_samps,
@@ -119,37 +122,44 @@ class SoarerDrifterMDP:
     def calc_balloon_reward(self, x, y, bal):
         # function to calculate the balloon reward
         # x,y position OF RELEASE
-        # bal = number of baloons left
-        goal_index = self.num_balloons - bal
+        # bal = number of balloons on uas at time of release
+        goal_index = self.num_goals - bal
         if (x, y, bal) in self.balloon_reward_dict:
             balloon_reward = self.balloon_reward_dict[(x, y, bal)]
         else:
-            self.field.prop_balloon(x, y, self.ygoal)
+            self.num_unique_queries = self.num_unique_queries + 1
+            self.field.prop_balloon(x, y, self.ygoals[goal_index])
             [mu, std] = self.field.calc_util()
-            if abs(mu - self.xgoals[goal_index]) > 5:
-                balloon_reward = -500
+            self.balloon_stats_dict[(x, y)] = [mu, std]
+
+            if abs(mu - self.xgoals[goal_index]) > 6:
+                balloon_reward = - 100 * abs(mu - self.xgoals[goal_index])
                 self.balloon_reward_dict[(x, y, bal)] = balloon_reward
             else:
-                goal_index = self.num_balloons - bal
-                balloon_reward = 100./abs(mu - self.xgoals[goal_index]) - 2.5*std
+                balloon_reward = 500./abs(mu - self.xgoals[goal_index]) - 2.5*std
                 self.balloon_reward_dict[(x, y, bal)] = balloon_reward
         return balloon_reward
 
+    def balloon_statistics(self, x, y):
+        # function to get the statistics of a balloon number bal released at state
+        # x, y. returns [mu, std]
+        if (x, y) in self.balloon_stats_dict:
+            return self.balloon_stats_dict[(x, y)]
 
     def calc_uas_reward(self, suas_action, y):
         # Control action costs
         suas_control_cost = 0
-        if suas_action == 0:
-            suas_control_cost = -.1
-        if suas_action == 1:
-            suas_control_cost = 0.
-        if suas_action == 2:
-            suas_control_cost = .1
+        # if suas_action == 0:
+        #     suas_control_cost = -.1
+        # if suas_action == 1:
+        #     suas_control_cost = 0.
+        # if suas_action == 2:
+        #     suas_control_cost = .1
 
         if (y <= self.ymax) and (y >= self.ymin):
-            suas_position_cost = -0.1*y
+            suas_position_cost = -0.1*(y - (self.ymax - self.ymin)/2)
         else:
-            suas_position_cost = -1000 # UUGE cost for going outside of bounds
+            suas_position_cost = -10000 # UUGE cost for going outside of bounds
 
         return suas_control_cost + suas_position_cost
 
@@ -162,7 +172,7 @@ class SoarerDrifterMDP:
     def import_windfield(self, field):
         self.field = field
         self.field.dt = self.balloon_dt  # set balloon propagation timestep length
-        self.field.y_goal = self.ygoal  # set balloon propagation ygoal
+        #self.field.y_goal = self.ygoal  # set balloon propagation ygoal
 
 
     def import_actionspace(self, x, y):
@@ -182,14 +192,14 @@ class SoarerDrifterMDP:
         # How to define action set?
         if s[2] <= 0:
             brange = [0]
-        if s[1] == self.ymax:
-            yrange = [1, 2]
-        if s[1] > self.ymax:
-            yrange = [2]
-        if s[1] == self.ymin:
-            yrange = [0, 1]
-        if s[1] < self.ymin:
-            yrange = [0]
+        # if s[1] == self.ymax:
+        #     yrange = [1, 2]
+        # if s[1] > self.ymax:
+        #     yrange = [2]
+        # if s[1] == self.ymin:
+        #     yrange = [0, 1]
+        # if s[1] < self.ymin:
+        #     yrange = [0]
 
         for y in yrange:
             for b in brange:
@@ -232,10 +242,10 @@ class SoarerDrifterMDP:
         return [a_opt, v_opt]
 
 
-    def selectaction_SPARCE(self, s, d, n):
+    def selectaction_SPARCE(self, s, d, n, gamma):
         # sparce sampling method. Does n random searches for each tree.
         # n = number of searches
-        gamma = 1 # tuning parameter
+        # gamma is a tuning parameter
 
         if d == 0:
             return (None, 0)
@@ -245,7 +255,7 @@ class SoarerDrifterMDP:
             v = 0
             for i in range(n):
                 [s_p, r] = self.generative_model(s, a)
-                [a_p, v_p] = self.selectaction_SPARCE(s_p, d-1, n)
+                [a_p, v_p] = self.selectaction_SPARCE(s_p, d-1, n, gamma)
                 v = v + (r + gamma*v_p)/n
             if v > v_s:
                 a_s, v_s = a, v
@@ -271,7 +281,11 @@ class SoarerDrifterMDP:
 
         # pick a with max Q value at s
         a = max(self.Q[tuple(s)], key=self.Q[tuple(s)].get)
-        #print(list(a))
+
+        if a[1] == 1:
+            print(a)
+            print(self.Q[tuple(s)])
+            print(self.Q)
         return list(a)
 
 
@@ -290,7 +304,7 @@ class SoarerDrifterMDP:
             Q[s] = {}
 
         if s not in T:
-            A_s = self.getactionspace(s)  # get action space for state s
+            A_s = self.getactionspace_MCTS(s)  # get action space for state s
             for a in A_s:
                     a = tuple(a)
                     N[s][a] = 0 # update number of times visited this state
@@ -309,6 +323,7 @@ class SoarerDrifterMDP:
             if n == 0:
                 value_dict[action] = math.inf
             else:
+                # is q/n?
                 value_dict[action] = q + c * math.sqrt(np.log(N_s)/n)
 
         a = max(value_dict, key=value_dict.get)
@@ -329,10 +344,45 @@ class SoarerDrifterMDP:
 
     def ROLLOUT_policy(self, s):
         # current rollout policy: pick a completely random action from action space.
-        action_space = self.getactionspace(s)
+        action_space = self.getactionspace_MCTS(s)
         as_length = len(action_space)
         i = np.random.randint(as_length) # pick a totally uniformly random action.
         return action_space[i]
+
+    def getactionspace_MCTS(self, s):
+        # check if releasing at the position to right is even feasible, if not, then don't
+        A_s = []  # empty list of actions
+
+        x, y, bal = s[0], s[1], s[2]
+        #print(x, y, bal)
+        if bal > 0:
+            _ = self.calc_balloon_reward(x+1, y, bal)
+            [mu, std] = self.balloon_statistics(x+1, y)
+            goal = self.ygoals[self.num_goals - (bal + 1)]
+
+        brange = [0, 1] # balloon actions
+        yrange = [0, 1, 2] # control actions
+
+        # How to define action set?
+        if (s[2] <= 0) or (abs(mu - goal) > 6):
+            brange = [0]
+        if s[1] == self.ymax:
+            yrange = [1, 2]
+        if s[1] > self.ymax:
+            yrange = [2]
+        if s[1] == self.ymin:
+            yrange = [0, 1]
+        if s[1] < self.ymin:
+            yrange = [0]
+
+        for y in yrange:
+            for b in brange:
+                A_s.append([y, b])
+
+        if s[0] >= self.xmax:
+            A_s = []
+
+        return A_s
 
 
     def generative_model(self, s, action):
