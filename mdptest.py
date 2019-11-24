@@ -103,9 +103,12 @@ for i in range(num_actions):
     print("action: ", a_opt)
     print("state: ", state)
 
-    for key, value in mdp.Q.items() :
-        print(key)
-        print(value)
+    if (abs(state[0] - 20) < 5)  or (abs(state[0] - 40) < 5):
+        print(state)
+        print(mdp.Q[tuple(state)])
+        # for key, value in mdp.Q.items() :
+        #     print(key)
+        #     print(value)
 
     state = mdp.take_action(state, a_opt)
     mdp.state_history.append(state)
@@ -123,7 +126,7 @@ for i in range(num_actions):
         bs = mdp.balloon_statistics(state[0], state[1]) # returns [mu, std]
         balloon_stats.append(bs) # final location stats
 
-        goal_location = mdp.ygoals[mdp.num_goals - (state[2] + 1)]
+        goal_location = mdp.xgoals[mdp.num_goals - (state[2] + 1)]
         avg_dist = abs(goal_location - bs[0])/mdp.num_goals
         bd_avg = bd_avg + avg_dist
 

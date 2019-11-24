@@ -129,7 +129,7 @@ for i in range(number_experiments):
                 bs = mdp.balloon_statistics(state[0], state[1]) # returns [mu, std]
                 balloon_stats.append(bs) # final location stats
 
-                goal_location = mdp.ygoals[mdp.num_goals - (state[2] + 1)]
+                goal_location = mdp.xgoals[mdp.num_goals - (state[2] + 1)]
                 avg_dist = abs(goal_location - bs[0])/mdp.num_goals
                 bd_avg = bd_avg + avg_dist
 

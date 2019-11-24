@@ -358,20 +358,20 @@ class SoarerDrifterMDP:
         if bal > 0:
             _ = self.calc_balloon_reward(x+1, y, bal)
             [mu, std] = self.balloon_statistics(x+1, y)
-            goal = self.ygoals[self.num_goals - (bal + 1)]
+            goal = self.xgoals[self.num_goals - (bal)]
 
         brange = [0, 1] # balloon actions
         yrange = [0, 1, 2] # control actions
 
         # How to define action set?
-        if (s[2] <= 0) or (abs(mu - goal) > 6):
+        if (s[2] <= 0) or (abs(mu - goal)>6):
             brange = [0]
         if s[1] == self.ymax:
-            yrange = [1, 2]
+            yrange = [2]
         if s[1] > self.ymax:
             yrange = [2]
         if s[1] == self.ymin:
-            yrange = [0, 1]
+            yrange = [0]
         if s[1] < self.ymin:
             yrange = [0]
 
