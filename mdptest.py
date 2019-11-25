@@ -10,8 +10,11 @@ from src import wind_field
 from src import gen_random_field
 from src import visualizer
 import matplotlib
+import numpy as np
 import clear_folder
 import time as t
+
+np.random.seed(11)
 
 
 logFormatter = logging.Formatter('%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s')
@@ -53,7 +56,7 @@ A = wind_field.wind_field(field.vel, field.loc, length, field.nsamps, field.samp
 # Create MDP object
 mdp = mdp.SoarerDrifterMDP(test_steps)
 x_goals = [20, 40, 60]  # x position of goals
-y_goals = [30, 30, 30]  # y position of goals
+y_goals = [30, 40, 30]  # y position of goals
 mdp.set_goals(x_goals, y_goals)
 mdp.balloon_dt = 0.25
 logger.info('X Goals: {}'.format(mdp.xgoals))
@@ -97,15 +100,16 @@ for i in range(num_actions):
     if solver == 'Forward':
         [a_opt, v_opt] = mdp.selectaction(state, horizon)
     if solver == 'Sparce':
-        [a_opt, v_opt] = mdp.selectaction_SPARCE(state, horizon, 2, .95)
+        [a_opt, v_opt] = mdp.selectaction_SPARCE(state, horizon, 1, .95)
     if solver == 'MCTS':
         a_opt = mdp.selectaction_MCTS(state, horizon, 500, .9, 200) # c, gamma, n
     print("action: ", a_opt)
     print("state: ", state)
 
     if (abs(state[0] - 20) < 5)  or (abs(state[0] - 40) < 5):
-        print(state)
-        print(mdp.Q[tuple(state)])
+        if solver == 'MCTS':
+            print(state)
+            print(mdp.Q[tuple(state)])
         # for key, value in mdp.Q.items() :
         #     print(key)
         #     print(value)
