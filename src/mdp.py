@@ -157,7 +157,7 @@ class SoarerDrifterMDP:
         #     suas_control_cost = .1
 
         if (y <= self.ymax) and (y >= self.ymin):
-            suas_position_cost = -0.1*(y - (self.ymax - self.ymin)/2)
+            suas_position_cost = -0.1*abs(y - (self.ymax - self.ymin)/2)
         else:
             suas_position_cost = -10000 # UUGE cost for going outside of bounds
 

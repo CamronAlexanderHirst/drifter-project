@@ -14,7 +14,7 @@ import numpy as np
 import clear_folder
 import time as t
 
-np.random.seed(11)
+np.random.seed(12)
 
 
 logFormatter = logging.Formatter('%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s')
@@ -36,6 +36,7 @@ n_samples = 75  # number of balloons propagated at each space
 
 time_start = t.process_time()
 
+# below: 0.25 for most results..
 field = gen_random_field.field_generator(n, m, length, 0, 0.25, n_samples, 'Normal')
 field.nrm_mean = 0  # Can use matrix here to specify distributions for each measurement
 field.nrm_sig = 1
@@ -65,19 +66,19 @@ logger.info('Balloon dt: {}'.format(mdp.balloon_dt))
 logger.info('generated mdp')
 
 mdp.import_windfield(A)  # import windfield
-xlimits = [0, 110]
+xlimits = [0, 115]
 ylimits = [0, 10]
 mdp.import_actionspace(xlimits, ylimits)  # import action space [xlimits], [ylimits]
 logger.info('imported windfield and actionspace')
 
 logger.info('running mdp simulation...')
-mdp.initial_state = [5, 0, mdp.num_goals]  # initialize state
+mdp.initial_state = [10, 0, mdp.num_goals]  # initialize state
 mdp.state_history.append(mdp.initial_state)
 state = mdp.initial_state
 
 # planner settings
 horizon = 5  # planning horizon
-num_actions = 90  # number of actions for MDP to take
+num_actions = 100  # number of actions for MDP to take
 
 logger.info('Horizon: {}'.format(horizon))
 logger.info('Number of actions: {}'.format(num_actions))
