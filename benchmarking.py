@@ -20,27 +20,34 @@ from src import visualizer
 import matplotlib
 import clear_folder
 import time as t
+import pandas as pd
 
 
 # logs results and test setup to a log file.
 logFormatter = logging.Formatter(
         '%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s')
 logger = logging.Logger(logFormatter)
-hdlr = logging.FileHandler(datetime.datetime.now().strftime(
-        'logs/benchmark/drifter_mdp_%H_%M_%d_%m_%Y.log'))
+
+benchmark_tag = datetime.datetime.now().strftime(
+                        'drifter_mdp_%H_%M_%d_%m_%Y')
+hdlr = logging.FileHandler('logs/benchmark/' + benchmark_tag + '.log')
 logger.addHandler(hdlr)
 consoleHandler = logging.StreamHandler()
 consoleHandler.setFormatter(logFormatter)
 logger.addHandler(consoleHandler)
 logger.setLevel(logging.INFO)
 
+# Create pandas dataframe
+column_names = ['Solver','Reward','CompTime','BalloonCompTime','UniqueQueries',
+                'BalloonStates', 'BalloonDistance', 'ACViolations']
+benchmark_data = pd.DataFrame(columns=column_names)
 
 solver_stats = {}
 solvers = ['TFS', 'SS', 'MCTS']
 for solver in solvers:
     solver_stats[solver] = []
 
-number_experiments = 1  # number of simulations ran for each solver
+number_experiments = 50  # number of simulations ran for each solver
 logger.info('mdp solver benchmarking tests')
 logger.info('Solvers: {}'.format(solvers))
 logger.info('Number of test runs: {}'.format(number_experiments))
@@ -148,9 +155,11 @@ for i in range(number_experiments):
         time_end = t.process_time()
         duration = time_end - time_start
 
-
-
         # FOR JOHN: Here are all of the metrics for this experiment
+        benchmark_data.loc[len(benchmark_data)] = [solver, reward, duration,
+                           comp_time_b, mdp.num_unique_queries, balloon_stats,
+                           bd_avg, num_leave_ws]
+
         logger.info('Solver: {}'.format(solver))
         logger.info('reward earned: {}'.format(reward))
         logger.info('total computation time: {}'.format(duration))
@@ -159,3 +168,5 @@ for i in range(number_experiments):
         logger.info('balloons final location stats [mu, std]: {}'.format(balloon_stats))
         logger.info('total average distance to goals: {}'.format(bd_avg))
         logger.info('number of times A/C leaves workspace: {}'.format(num_leave_ws))
+
+benchmark_data.to_pickle('./logs/benchmark/' + benchmark_tag + '.zip')
