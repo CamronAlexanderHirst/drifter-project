@@ -21,7 +21,10 @@ import matplotlib
 import clear_folder
 import time as t
 import pandas as pd
+import random
 
+random_seed_number = 11
+random.seed(11)
 
 # logs results and test setup to a log file.
 logFormatter = logging.Formatter(
@@ -51,6 +54,7 @@ number_experiments = 50  # number of simulations ran for each solver
 logger.info('mdp solver benchmarking tests')
 logger.info('Solvers: {}'.format(solvers))
 logger.info('Number of test runs: {}'.format(number_experiments))
+logger.info('Random Seed: {}'.format(random_seed_number))
 
 for i in range(number_experiments):
     logger.info('Test number: {} of {}'.format(i, number_experiments))
