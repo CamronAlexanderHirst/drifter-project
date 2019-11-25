@@ -114,7 +114,7 @@ for i in range(number_experiments):
             if solver == 'TFS':
                 [a_opt, v_opt] = mdp.selectaction(state, 5)
             elif solver == 'SS':
-                [a_opt, v_opt] = mdp.selectaction_SPARCE(state, 5, 2, .95)
+                [a_opt, v_opt] = mdp.selectaction_SPARCE(state, 5, 1, .95)
             elif solver == 'MCTS':
                 a_opt = mdp.selectaction_MCTS(state, 5, 100, .95, 100)
 
