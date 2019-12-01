@@ -17,7 +17,7 @@ class field_generator:
         Matrix = np.zeros((2, n, m))
         location_Matrix = np.zeros((2, n, m))
 
-        Matrix[1, :, :] = 3
+        Matrix[1, :, :] = 10
         # define all y-velocities as 1m/s
 
         Matrix[0, :, 0] = init_x

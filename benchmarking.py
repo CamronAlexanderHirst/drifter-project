@@ -61,15 +61,15 @@ for i in range(number_experiments):
     test_steps = 100 # currently unused, number of actions to take?
     n = 10  # # of cells height of field (y)
     m = 25  # # of cells width of field (x)
-    length = 5  # cell unit width for field estimate
+    length = 500  # cell unit width for field estimate
     n_samples = 75  # number of balloons propagated at each space
     # logger.info('field params: n, m, length, n_samples: {}'.format(n, m, length, n_samples))
     # create a random wind field, this is our estimate of the field.
-    field = gen_random_field.field_generator(n, m, length, 0, 0.25, n_samples, 'Normal')
+    field = gen_random_field.field_generator(n, m, length, 0, 1, n_samples, 'Normal')
 
     # speed statistics
     field.nrm_mean_s = 0
-    field.nrm_sig_s = 0.25
+    field.nrm_sig_s = 2.5
     # heading statistics
     field.nrm_mean_h = 0
     field.nrm_sig_h = 0.25
@@ -78,8 +78,8 @@ for i in range(number_experiments):
     field.sample_heading_speed() # sample n_samples fields with heading and speed stats
     A = wind_field.wind_field(field.vel, field.loc, length, field.nsamps, field.samples)
 
-    x_goals = [20, 30, 40, 50]  # x position of goals
-    y_goals = [30, 30, 30, 30]  # y position of goals
+    x_goals = [2000, 3000, 4000, 5000]  # x position of goals
+    y_goals = [3000, 3000, 3000, 3000]  # y position of goals
     logger.info('x_goals: {}'.format(x_goals))
     logger.info('y_goals: {}'.format(y_goals))
     for solver in solvers:
@@ -91,12 +91,12 @@ for i in range(number_experiments):
         # Create MDP object
         mdp = MDP.SoarerDrifterMDP(test_steps)  # initialize MDP object
         mdp.set_goals(x_goals, y_goals)  # x, y locations of goals
-        mdp.balloon_dt = 0.25  # to prop balloon, dt
+        mdp.balloon_dt = 5  # to prop balloon, dt
         mdp.import_windfield(A)  # import windfield
-        xlimits = [0, 110]
-        ylimits = [0, 10]
+        xlimits = [0, 11000]
+        ylimits = [0, 1000]
         mdp.import_actionspace(xlimits, ylimits)  # import action space [xlimits], [ylimits]
-        mdp.initial_state = [10, 0, mdp.num_goals]  # initialize state
+        mdp.initial_state = [1000, 0, mdp.num_goals]  # initialize state
         mdp.state_history.append(mdp.initial_state)  # initialize state history
 
         num_actions = 90  # number of actions for MDP to take
@@ -120,7 +120,7 @@ for i in range(number_experiments):
             elif solver == 'SS':
                 [a_opt, v_opt] = mdp.selectaction_SPARCE(state, 5, 1, .95)
             elif solver == 'MCTS':
-                a_opt = mdp.selectaction_MCTS(state, 5, 500, .9, 200)
+                a_opt = mdp.selectaction_MCTS(state, 5, 50000, .9, 200)
 
 
             state = mdp.take_action(state, a_opt)

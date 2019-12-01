@@ -73,18 +73,18 @@ class SoarerDrifterMDP:
             if A[1] == 1:  # if we release a balloon at the next step
 
                 B = self.field
-                self.x_release = s[0] + 1
-                self.y_release = s[1] + (-1*(control_result-1))
+                self.x_release = s[0] + 100
+                self.y_release = s[1] + (-100*(control_result-1))
 
                 ygoal = self.ygoals[self.num_goals - s[2]]
-                B.prop_balloon(s[0] + 1, s[1] + (-1*(control_result-1)), ygoal)
+                B.prop_balloon(s[0] + 100, s[1] + (-100*(control_result-1)), ygoal)
 
                 self.release_traj[self.num_releases] = [B.position_history_x_samps,
                                                         B.position_history_y_samps,
                                                         B.position_history_x_orig,
                                                         B.position_history_y_orig]
                 self.num_releases += 1  # add count for number of releases
-        return ([s[0] + 1, s[1] + (-1*(control_result-1)), s[2] - A[1]])
+        return ([s[0] + 100, s[1] + (-100*(control_result-1)), s[2] - A[1]])
 
 
 
@@ -103,8 +103,8 @@ class SoarerDrifterMDP:
         for i in range(len(T)):
             t = T[i]
             suas_action = i
-            x = s[0] + 1
-            y = s[1] + (-1*(suas_action-1))
+            x = s[0] + 100
+            y = s[1] + (-100*(suas_action-1))
             bal = s[2]
 
             if balloon_action > 0:
@@ -132,11 +132,11 @@ class SoarerDrifterMDP:
             [mu, std] = self.field.calc_util()
             self.balloon_stats_dict[(x, y)] = [mu, std]
 
-            if abs(mu - self.xgoals[goal_index]) > 6:
+            if abs(mu - self.xgoals[goal_index]) > 600:
                 balloon_reward = - 100 * abs(mu - self.xgoals[goal_index])
                 self.balloon_reward_dict[(x, y, bal)] = balloon_reward
             else:
-                balloon_reward = 500./abs(mu - self.xgoals[goal_index]) - 0.25*std
+                balloon_reward = 50000./abs(mu - self.xgoals[goal_index]) - 0.000001*std
                 self.balloon_reward_dict[(x, y, bal)] = balloon_reward
         return balloon_reward
 
@@ -157,9 +157,9 @@ class SoarerDrifterMDP:
         #     suas_control_cost = .1
 
         if (y <= self.ymax) and (y >= self.ymin):
-            suas_position_cost = -0.1*abs(y - (self.ymax - self.ymin)/2)
+            suas_position_cost = -0.001*abs(y - (self.ymax - self.ymin)/2)
         else:
-            suas_position_cost = -10000 # UUGE cost for going outside of bounds
+            suas_position_cost = -100000 # UUGE cost for going outside of bounds
 
         return suas_control_cost + suas_position_cost
 
@@ -213,7 +213,7 @@ class SoarerDrifterMDP:
 
     def getstatespace(self, s, A):
         S_s = []
-        S_s.append([s[0] + 1, s[1] + (-1*(A[0]-1)), s[2] - A[1]])
+        S_s.append([s[0] + 100, s[1] + (-100*(A[0]-1)), s[2] - A[1]])
 
         return S_s
 
@@ -356,15 +356,15 @@ class SoarerDrifterMDP:
         x, y, bal = s[0], s[1], s[2]
         #print(x, y, bal)
         if bal > 0:
-            _ = self.calc_balloon_reward(x+1, y, bal)
-            [mu, std] = self.balloon_statistics(x+1, y)
+            _ = self.calc_balloon_reward(x+100, y, bal)
+            [mu, std] = self.balloon_statistics(x+100, y)
             goal = self.xgoals[self.num_goals - (bal)]
 
         brange = [0, 1] # balloon actions
         yrange = [0, 1, 2] # control actions
 
         # How to define action set?
-        if (s[2] <= 0) or (abs(mu - goal)>6):
+        if (s[2] <= 0) or (abs(mu - goal) > 600):
             brange = [0]
         if s[1] == self.ymax:
             yrange = [2]
@@ -406,8 +406,8 @@ class SoarerDrifterMDP:
         else:
             a = 2
 
-        x = s[0] + 1
-        y = s[1] + (-1*(a-1))
+        x = s[0] + 100
+        y = s[1] + (-100*(a-1))
         bal = s[2]
 
         if balloon_action > 0:

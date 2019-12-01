@@ -30,20 +30,18 @@ logger.setLevel(logging.INFO)
 test_steps = 100 # currently unused, number of actions to take?
 n = 14  # # of cells height of field (y)
 m = 25  # # of cells width of field (x)
-length = 5  # cell unit width for field estimate
+length = 500  # cell unit width for field estimate
 n_samples = 75  # number of balloons propagated at each space
 
 
 time_start = t.process_time()
 
 # below: 0.25 for most results..
-field = gen_random_field.field_generator(n, m, length, 0, 0.25, n_samples, 'Normal')
-field.nrm_mean = 0  # Can use matrix here to specify distributions for each measurement
-field.nrm_sig = 1
+field = gen_random_field.field_generator(n, m, length, 0, 1, n_samples, 'Normal')
 
 # speed statistics
 field.nrm_mean_s = 0
-field.nrm_sig_s = 0.25
+field.nrm_sig_s = 2.5
 # heading statistics
 field.nrm_mean_h = 0
 field.nrm_sig_h = 0.25
@@ -56,29 +54,29 @@ A = wind_field.wind_field(field.vel, field.loc, length, field.nsamps, field.samp
 
 # Create MDP object
 mdp = mdp.SoarerDrifterMDP(test_steps)
-x_goals = [20, 40, 60, 80]  # x position of goals
-y_goals = [30, 55, 35, 45]  # y position of goals
+x_goals = [2000, 4000, 6000, 8000]  # x position of goals
+y_goals = [3000, 5500, 3500, 4500]  # y position of goals
 mdp.set_goals(x_goals, y_goals)
-mdp.balloon_dt = 0.25
+mdp.balloon_dt = 5
 logger.info('X Goals: {}'.format(mdp.xgoals))
 logger.info('Y Goals: {}'.format(mdp.ygoals))
 logger.info('Balloon dt: {}'.format(mdp.balloon_dt))
 logger.info('generated mdp')
 
 mdp.import_windfield(A)  # import windfield
-xlimits = [0, 115]
-ylimits = [0, 10]
+xlimits = [0, 11500]
+ylimits = [0, 1000]
 mdp.import_actionspace(xlimits, ylimits)  # import action space [xlimits], [ylimits]
 logger.info('imported windfield and actionspace')
 
 logger.info('running mdp simulation...')
-mdp.initial_state = [10, 0, mdp.num_goals]  # initialize state
+mdp.initial_state = [1000, 0, mdp.num_goals]  # initialize state
 mdp.state_history.append(mdp.initial_state)
 state = mdp.initial_state
 
 # planner settings
 horizon = 5  # planning horizon
-num_actions = 100  # number of actions for MDP to take
+num_actions = 100 # number of actions for MDP to take
 
 logger.info('Horizon: {}'.format(horizon))
 logger.info('Number of actions: {}'.format(num_actions))
@@ -93,21 +91,24 @@ balloon_stats = []  # balloon final location statistics list
 bd_avg = 0 # mean distance to goal
 num_leave_ws = 0  # number of times A/C leaves ws
 
-solver = 'MCTS'  # either 'Forward', 'Sparce', or 'MCTS'
+solver = 'Sparce'  # either 'Forward', 'Sparce', or 'MCTS'
 logger.info('Solver: {}'.format(solver))
 
 for i in range(num_actions):
     print(i)
     if solver == 'Forward':
         [a_opt, v_opt] = mdp.selectaction(state, horizon)
+        title = 'Truncated Forward Search Solution'
     if solver == 'Sparce':
         [a_opt, v_opt] = mdp.selectaction_SPARCE(state, horizon, 1, .95)
+        title = 'Sparce Search Solution'
     if solver == 'MCTS':
-        a_opt = mdp.selectaction_MCTS(state, horizon, 500, .9, 200) # c, gamma, n
+        a_opt = mdp.selectaction_MCTS(state, horizon, 50000, .9, 200) # c, gamma, n
+        title = 'Monte Carlo Tree Search Solution'
     print("action: ", a_opt)
     print("state: ", state)
 
-    if (abs(state[0] - 20) < 5)  or (abs(state[0] - 40) < 5):
+    if (abs(state[0] - 2000) < 500)  or (abs(state[0] - 4000) < 500):
         if solver == 'MCTS':
             print(state)
             print(mdp.Q[tuple(state)])
@@ -171,7 +172,7 @@ logger.info('done')
 logger.info('visualizing...')
 vis = visualizer.animator_mdp()
 vis.save = True
-vis.simple_plot(mdp, solver)
+vis.simple_plot(mdp, title)
 
 input('press enter to be done')
 

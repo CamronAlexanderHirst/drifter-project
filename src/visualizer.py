@@ -25,7 +25,7 @@ class animator:
     def init_live_plot(self, wind_field):
 
         # Initialize live plot
-        self.fig = plt.figure()
+        self.fig = plt.figure(figsize=(4,6))
         self.ax = self.fig.add_subplot(111)  # create a subplot
         self.ax.axis('equal')
 
@@ -44,14 +44,22 @@ class animator:
         x_lim_max = wind_field.x_location[1, -1]+1
         y_lim_max = wind_field.y_location[-1, 0]+1
 
-        plt.xticks(np.arange(0, length*(wind_field.matsizex), length))
-        plt.yticks(np.arange(0, length*(wind_field.matsizey), length))
+        xt = np.arange(0, length*(wind_field.matsizex), length)
+        yt = np.arange(0, length*(wind_field.matsizey), length)
+
+
+        self.ax.set_xticks([x for x in xt])
+        self.ax.set_xticklabels([str(x/1000) for x in xt])
+        self.ax.set_yticks([x for x in xt])
+        self.ax.set_yticklabels([str(x/1000) for x in yt])
 
         plt.xlim([x_lim_min, x_lim_max])
         plt.ylim([y_lim_min, y_lim_max])
 
-        plt.xlabel('X')
-        plt.ylabel('Y')
+        plt.xlabel('$Z_1$ (km)')
+        plt.ylabel('$Z_2$ (km)')
+        plt.title(title)
+
         plt.grid()
 
         num_agents = wind_field.nsamps
@@ -139,14 +147,19 @@ class animator_mdp:
         x_lim_max = wind_field.x_location[1, -1]+1
         y_lim_max = wind_field.y_location[-1, 0]+1
 
-        plt.xticks(np.arange(0, length*(wind_field.matsizex), length))
-        plt.yticks(np.arange(0, length*(wind_field.matsizey), length))
+        xt = np.arange(0, length*(wind_field.matsizex), length)
+        yt = np.arange(0, length*(wind_field.matsizey), length)
+
+        self.ax.set_xticks([x for x in xt])
+        self.ax.set_xticklabels([str(x/1000) for x in xt])
+        self.ax.set_yticks([x for x in xt])
+        self.ax.set_yticklabels([str(x/1000) for x in yt])
 
         plt.xlim([x_lim_min, x_lim_max])
         plt.ylim([y_lim_min, y_lim_max])
 
-        plt.xlabel('Z_1')
-        plt.ylabel('Z_2')
+        plt.xlabel('$Z_1$ (km)')
+        plt.ylabel('$Z_2$ (km)')
         plt.title(title)
 
         # set every other label off
@@ -196,8 +209,8 @@ class animator_mdp:
         for i in range(len(mdp.xgoals)):
             self.ax.plot(mdp.xgoals[i], mdp.ygoals[i], 'rD', markersize=10, zorder=3)
 
-
-        xmin, xmax, ymin, ymax = mdp.xmin+10, mdp.xmax-5, mdp.ymin, mdp.ymax
+        # bounding box
+        xmin, xmax, ymin, ymax = mdp.xmin+1000, mdp.xmax-500, mdp.ymin, mdp.ymax
         bbox = [[xmin, xmax, xmax, xmin, xmin],
                 [ymin, ymin, ymax, ymax, ymin]]
         self.ax.plot(bbox[0], bbox[1], color='orange', zorder=1)
