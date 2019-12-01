@@ -25,10 +25,9 @@ class animator:
     def init_live_plot(self, wind_field):
 
         # Initialize live plot
-
-        self.fig = plt.figure(figsize=(8, 8))
-
+        self.fig = plt.figure()
         self.ax = self.fig.add_subplot(111)  # create a subplot
+        self.ax.axis('equal')
 
         # Starting point is plotted as a diamond
         self.ax.plot(wind_field.position_history_x_orig[0], wind_field.position_history_y_orig[0], 'bD')
@@ -112,6 +111,100 @@ class animator_mdp:
         self.trail_length = 500
         self.save = False
 
+    def simple_plot(self, mdp, title):
+        self.wind_field = mdp.field
+        self.num_ballons = mdp.num_goals
+        wind_field = self.wind_field
+
+        self.state_history = mdp.state_history  # aircraft state history
+        self.release_traj = mdp.release_traj
+
+        # create subplot
+        self.fig = plt.figure(figsize=(9, 5))
+        self.ax = self.fig.add_subplot(111)  # create a subplot
+        self.ax.axis('equal')
+
+
+        # plot vector field
+        xmat = wind_field.x_matrix
+        ymat = wind_field.y_matrix
+        plt.quiver(wind_field.x_location, wind_field.y_location, xmat, ymat, width=0.0025)
+        self.ax.set_axisbelow(True)
+        plt.grid()
+
+        length = wind_field.length
+        x_lim_min = wind_field.x_location[0, 0]-1
+        y_lim_min = wind_field.y_location[0, 0]-1
+
+        x_lim_max = wind_field.x_location[1, -1]+1
+        y_lim_max = wind_field.y_location[-1, 0]+1
+
+        plt.xticks(np.arange(0, length*(wind_field.matsizex), length))
+        plt.yticks(np.arange(0, length*(wind_field.matsizey), length))
+
+        plt.xlim([x_lim_min, x_lim_max])
+        plt.ylim([y_lim_min, y_lim_max])
+
+        plt.xlabel('Z_1')
+        plt.ylabel('Z_2')
+        plt.title(title)
+
+        # set every other label off
+        for label in self.ax.xaxis.get_ticklabels()[1::2]:
+            label.set_visible(False)
+        for label in self.ax.yaxis.get_ticklabels()[1::2]:
+            label.set_visible(False)
+
+
+        # find state where balloon is realeased
+        i = 0
+        old_state = self.state_history[0][2]
+        self.release_times = {}
+        for state in self.state_history:
+            if state[2] == (old_state - 1):
+                self.release_times[self.num_ballons - old_state] = i
+                old_state = state[2]
+                if state[2] == 0:
+                    break
+            i = i + 1
+
+        # This updates all agents at a time
+        wind_field = self.wind_field
+        release_times = self.release_times
+        state_history = self.state_history
+        nsamps = wind_field.nsamps
+
+        x = []
+        y = []
+        for state in state_history[:]:
+            x.append(state[0])
+            y.append(state[1])
+
+        self.state_list = self.ax.plot([], [], 'bo', markersize=4)
+        self.state_list[0].set_data(x, y)
+
+        release_times = self.release_times
+        for release_num in release_times:
+            release_time = release_times[release_num]
+
+            posx = self.release_traj[release_num][0]
+            posy = self.release_traj[release_num][1]
+
+            for j in range(nsamps):
+                    line = self.ax.plot(posx[j], posy[j], zorder=2)
+
+        for i in range(len(mdp.xgoals)):
+            self.ax.plot(mdp.xgoals[i], mdp.ygoals[i], 'rD', markersize=10, zorder=3)
+
+
+        xmin, xmax, ymin, ymax = mdp.xmin+10, mdp.xmax-5, mdp.ymin, mdp.ymax
+        bbox = [[xmin, xmax, xmax, xmin, xmin],
+                [ymin, ymin, ymax, ymax, ymin]]
+        self.ax.plot(bbox[0], bbox[1], color='orange', zorder=1)
+
+        plt.show(block=False)
+
+
     def init_live_plot(self, mdp):
 
         self.wind_field = mdp.field
@@ -133,8 +226,7 @@ class animator_mdp:
                     break
             i = i + 1
 
-        # self.release_time = i
-        # i is used for the total time
+
         y_pos = wind_field.position_history_y_samps
         self.total_time = i + max([len(b) for b in y_pos]) + 1
         if len(self.state_history) > self.total_time:
@@ -144,12 +236,13 @@ class animator_mdp:
         # self.wind_field.position_history_y_samps = y_release + self.wind_field.position_history_y_samps
         # Initialize live plot
 
-        self.fig = plt.figure(figsize=(8, 8))
+        self.fig = plt.figure()
         self.ax = self.fig.add_subplot(111)  # create a subplot
+        self.ax.axis('equal')
 
         # Starting point is plotted as a diamond
         for i in range(len(mdp.xgoals)):
-            self.ax.plot(mdp.xgoals[i], mdp.ygoals[i], 'rD', markersize=10)
+            self.ax.plot(mdp.xgoals[i], mdp.ygoals[i], 'rD', markersize=10, zorder=1)
 
         # plot vector field
         xmat = wind_field.x_matrix
@@ -182,7 +275,7 @@ class animator_mdp:
 
         for release_num in self.release_times:
             for i in range(num_agents):
-                line, = self.ax.plot([], [])
+                line, = self.ax.plot([], [], zorder=1)
                 self.line_dict[release_num].append(line)
 
         self.state_list = self.ax.plot([], [], 'bo', markersize=8)

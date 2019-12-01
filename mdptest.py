@@ -28,7 +28,7 @@ logger.setLevel(logging.INFO)
 
 
 test_steps = 100 # currently unused, number of actions to take?
-n = 10  # # of cells height of field (y)
+n = 14  # # of cells height of field (y)
 m = 25  # # of cells width of field (x)
 length = 5  # cell unit width for field estimate
 n_samples = 75  # number of balloons propagated at each space
@@ -56,8 +56,8 @@ A = wind_field.wind_field(field.vel, field.loc, length, field.nsamps, field.samp
 
 # Create MDP object
 mdp = mdp.SoarerDrifterMDP(test_steps)
-x_goals = [20, 40, 60]  # x position of goals
-y_goals = [30, 40, 30]  # y position of goals
+x_goals = [20, 40, 60, 80]  # x position of goals
+y_goals = [30, 55, 35, 45]  # y position of goals
 mdp.set_goals(x_goals, y_goals)
 mdp.balloon_dt = 0.25
 logger.info('X Goals: {}'.format(mdp.xgoals))
@@ -171,15 +171,17 @@ logger.info('done')
 logger.info('visualizing...')
 vis = visualizer.animator_mdp()
 vis.save = True
-vis.init_live_plot(mdp)
+vis.simple_plot(mdp, solver)
 
-for time in range(vis.total_time):
-    #t.sleep(0.1)
-    vis.measurement_update(time)
+input('press enter to be done')
 
-gif = input('make gif? (y/n)')
-if gif == 'y':
-    vis.make_gif()
+# for time in range(vis.total_time):
+#     t.sleep(0.1)
+#     vis.measurement_update(time)
+
+# gif = input('make gif? (y/n)')
+# if gif == 'y':
+#     vis.make_gif()
 
 # Clear the figures folder
-clear_folder.clear_figure_folder()
+# clear_folder.clear_figure_folder()
