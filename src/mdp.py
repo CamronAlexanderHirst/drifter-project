@@ -136,7 +136,7 @@ class SoarerDrifterMDP:
                 balloon_reward = - 100 * abs(mu - self.xgoals[goal_index])
                 self.balloon_reward_dict[(x, y, bal)] = balloon_reward
             else:
-                balloon_reward = 500./abs(mu - self.xgoals[goal_index]) - 2.5*std
+                balloon_reward = 500./abs(mu - self.xgoals[goal_index]) - 0.25*std
                 self.balloon_reward_dict[(x, y, bal)] = balloon_reward
         return balloon_reward
 
