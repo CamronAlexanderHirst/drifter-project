@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Path to the pandas dataframe pickle
-datafile = './logs/benchmark/drifter_mdp_18_53_25_11_2019.zip'
+datafile = './logs/benchmark/drifter_mdp_21_41_30_11_2019.zip'
 dataframe = pd.read_pickle(datafile)
 # figure_directory = '/Users/John/Documents/CU Boulder/Conference Papers/sUAS Decision Making/drifter-project/figs/'
 figure_directory = './figs/'
@@ -118,17 +118,32 @@ ax.bar([1, 2, 3],
         [np.mean(df_TFS.BalloonDistance),
          np.mean(df_SS.BalloonDistance),
          np.mean(df_MCTS.BalloonDistance)],
-         yerr=[2*np.std(df_TFS.BalloonDistance),
-               2*np.std(df_SS.BalloonDistance),
-               2*np.std(df_MCTS.BalloonDistance)],
-        error_kw=dict(lw=4),
-        color='silver',
-        width=0.5)
+         color='silver')
+
+# Plot the min/max bars
+ax.plot([1, 1], [np.min(df_TFS.BalloonDistance), np.max(df_TFS.BalloonDistance)],
+         color='black', linewidth=4)
+
+ax.plot([2, 2], [np.min(df_TFS.BalloonDistance), np.max(df_SS.BalloonDistance)],
+color='black', linewidth=4)
+
+ax.plot([3, 3], [np.min(df_TFS.BalloonDistance), np.max(df_MCTS.BalloonDistance)],
+   color='black', linewidth=4)
 
 ax.set_xticks([1, 2, 3])
 ax.set_xticklabels(['TFS', 'SS', 'MCTS'], fontsize=14)
 plt.savefig(figure_directory + 'distance.png', dpi=600)
 
+## Looking at the min max bars
+fig = plt.figure(figsize=(8, 6), dpi=80, facecolor='w', edgecolor='k')
+plt.title("Balloon Distance From Goal Histogram", fontsize=14)
+plt.ylabel("Mean Distance (m)", fontsize=14)
+ax = fig.add_subplot(111)
+ax.yaxis.grid(True, color='lightgray')
+ax.set_axisbelow(True)
+
+ax.hist(df_MCTS.BalloonDistance, bins=100)
+plt.savefig(figure_directory + 'distance-debug.png', dpi=600)
 ################################################################################
 # Workspace Violations
 ################################################################################
