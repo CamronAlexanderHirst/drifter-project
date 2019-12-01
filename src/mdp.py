@@ -133,10 +133,10 @@ class SoarerDrifterMDP:
             self.balloon_stats_dict[(x, y)] = [mu, std]
 
             if abs(mu - self.xgoals[goal_index]) > 600:
-                balloon_reward = - 100 * abs(mu - self.xgoals[goal_index])
+                balloon_reward = - 10 * abs(mu - self.xgoals[goal_index])
                 self.balloon_reward_dict[(x, y, bal)] = balloon_reward
             else:
-                balloon_reward = 50000./abs(mu - self.xgoals[goal_index]) - 0.000001*std
+                balloon_reward = 5000./abs(mu - self.xgoals[goal_index]) - 0.0001*std
                 self.balloon_reward_dict[(x, y, bal)] = balloon_reward
         return balloon_reward
 
