@@ -79,7 +79,7 @@ plt.savefig(figure_directory + 'rewards.png', dpi=600)
 # Unique Queries
 ################################################################################
 fig = plt.figure(figsize=(8, 6), dpi=80, facecolor='w', edgecolor='k')
-plt.title("Unique Balloon Queries", fontsize=14)
+plt.title("Unique Drifter Queries", fontsize=14)
 # plt.xlabel("Solver")
 plt.ylabel("Queries", fontsize=14)
 plt.xlim(0.5,3.5)
@@ -106,7 +106,7 @@ plt.savefig(figure_directory + 'queries.png', dpi=600)
 # Balloon Distance
 ################################################################################
 fig = plt.figure(figsize=(8, 6), dpi=80, facecolor='w', edgecolor='k')
-plt.title("Balloon Distance From Goal", fontsize=14)
+plt.title("Drifter Distance From Goal", fontsize=14)
 # plt.xlabel("Solver")
 plt.ylabel("Mean Distance (m)", fontsize=14)
 plt.xlim(0.5,3.5)
@@ -136,7 +136,7 @@ plt.savefig(figure_directory + 'distance.png', dpi=600)
 
 ## Looking at the min max bars
 fig = plt.figure(figsize=(8, 6), dpi=80, facecolor='w', edgecolor='k')
-plt.title("Balloon Distance From Goal Histogram", fontsize=14)
+plt.title("Drifter Distance From Goal Histogram", fontsize=14)
 plt.ylabel("Mean Distance (m)", fontsize=14)
 ax = fig.add_subplot(111)
 ax.yaxis.grid(True, color='lightgray')
