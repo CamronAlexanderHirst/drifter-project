@@ -16,13 +16,13 @@ random.seed(11)
 # Generate a nxm field
 n = 10  # cell height of field (y)
 m = 15   # cell width of field (x)
-length = 5
+length = 500
 n_samples = 100
 
-field = gen_random_field.field_generator(n, m, length, 0, 0.15, n_samples, 'Normal')
+field = gen_random_field.field_generator(n, m, length, 0, 1, n_samples, 'Normal')
 # speed statistics
 field.nrm_mean_s = 0
-field.nrm_sig_s = 0.25
+field.nrm_sig_s = 2.5
 # heading statistics
 field.nrm_mean_h = 0
 field.nrm_sig_h = 0.25
@@ -30,13 +30,13 @@ field.sample_heading_speed()
 
 A = wind_field.wind_field(field.vel, field.loc, length, field.nsamps, field.samples)
 
-A.dt = 0.25
+A.dt = 2.5
 A.t_end = 20
-A.y_goal = 30
+A.y_goal = 3000
 
 dx = 1
-xstart = 35  # absolute starting point
-xend = 35  # abosulte end point
+xstart = 3500  # absolute starting point
+xend = 3500  # abosulte end point
 ystart = 5
 num_release_pts = 1
 
