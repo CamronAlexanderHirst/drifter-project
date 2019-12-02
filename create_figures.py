@@ -5,8 +5,8 @@
 import pandas as pd
 import matplotlib
 from matplotlib import rcParams
-rcParams['font.family'] = 'serif'
-rcParams['font.sans-serif'] = ['Times New Roman']
+rcParams['font.family'] = 'sans-serif'
+# rcParams['font.sans-serif'] = ['Times New Roman']
 import matplotlib.pyplot as plt
 import numpy as np
 
