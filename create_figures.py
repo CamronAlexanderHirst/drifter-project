@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Path to the pandas dataframe pickle
-datafile = './logs/benchmark/drifter_mdp_21_41_30_11_2019.zip'
+datafile = './logs/benchmark/drifter_mdp_14_18_01_12_2019.zip'
 dataframe = pd.read_pickle(datafile)
 # figure_directory = '/Users/John/Documents/CU Boulder/Conference Papers/sUAS Decision Making/drifter-project/figs/'
 figure_directory = './figs/'
