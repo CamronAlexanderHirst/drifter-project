@@ -57,7 +57,9 @@ class wind_field:
 
         # Get x_traj and y_traj (MUST RUN prop_balloon FIRST)
 
-        self.fig = plt.figure(figsize=(10, 10))
+        self.fig = plt.figure(figsize=(8,6))
+        self.ax = self.fig.add_subplot(111)  # create a subplot
+        self.ax.axis('equal')
 
         plt.quiver(self.x_location, self.y_location, xmat, ymat)
 
@@ -80,15 +82,29 @@ class wind_field:
             plt.plot(self.xmean_orig, self.position_history_y_orig[-1], 'bo',
                      markersize=8)
 
-        plt.axis([self.x_location[0, 0]-1, self.x_location[1, -1]+1,
-                  self.y_location[0, 0]-1, self.y_location[-1, 1]+1])
+        # plt.axis([self.x_location[0, 0]-1, self.x_location[1, -1]+1,
+        #           self.y_location[0, 0]-1, self.y_location[-1, 1]+1])
 
-        plt.xticks(np.arange(0, length*(self.matsizex), length))
-        plt.yticks(np.arange(0, length*(self.matsizey), length))
-        plt.xlabel('X')
-        plt.ylabel('Y')
+        xt = np.arange(0, length*(self.matsizex), length)
+        yt = np.arange(0, length*(self.matsizey), length)
 
-        plt.grid(True, which='major', axis='both')
+        self.ax.set_xticks([x for x in xt])
+        self.ax.set_xticklabels([str(x/1000) for x in xt])
+        self.ax.set_yticks([x for x in xt])
+        self.ax.set_yticklabels([str(x/1000) for x in yt])
+
+        x_lim_min = self.x_location[0, 0]-1
+        y_lim_min = self.y_location[0, 0]-1
+        x_lim_max = self.x_location[1, -1]+1
+        y_lim_max = self.y_location[-1, 0]+1
+        plt.xlim([x_lim_min, x_lim_max])
+        plt.ylim([y_lim_min, y_lim_max])
+
+        plt.xlabel('$Z_1$ (km)')
+        plt.ylabel('$Z_2$ (km)')
+        plt.title('Example Drifter Propagation')
+
+        plt.grid()
 
         # Show plot
         # TODO: How to make this run in background?
